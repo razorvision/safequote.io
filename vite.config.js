@@ -253,6 +253,8 @@ export default defineConfig({
 		},
 	},
 	build: {
+		outDir: 'wp-content/themes/safequote-theme/build',
+		manifest: 'manifest.json',
 		rollupOptions: {
 			external: [
 				'@babel/parser',

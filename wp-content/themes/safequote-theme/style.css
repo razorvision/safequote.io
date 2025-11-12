@@ -1,0 +1,18 @@
+/*
+Theme Name: SafeQuote
+Theme URI: https://safequote.app
+Description: WordPress theme hosting the SafeQuote React application for vehicle safety ratings and insurance comparison
+Version: 1.0.0
+Author: SafeQuote Team
+Author URI: https://safequote.app
+License: GPL v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: safequote
+Domain Path: /languages
+Requires at least: 5.9
+Requires PHP: 7.4
+*/
+
+/* SafeQuote React Application Styles */
+/* Main styles are loaded from the React application build */
+/* This file serves as the theme manifest for WordPress */
