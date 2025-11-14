@@ -90,12 +90,36 @@ function safequote_enqueue_styles() {
         null
     );
 
-    // Main stylesheet (compiled from Tailwind)
+    // Compiled Tailwind CSS (production-ready)
+    wp_enqueue_style(
+        'tailwind-compiled',
+        SAFEQUOTE_THEME_URI . '/assets/css/tailwind.css',
+        array(),
+        filemtime(SAFEQUOTE_THEME_DIR . '/assets/css/tailwind.css')
+    );
+
+    // Main stylesheet with cache busting
     wp_enqueue_style(
         'safequote-main-style',
         SAFEQUOTE_THEME_URI . '/assets/css/main.css',
         array(),
-        SAFEQUOTE_THEME_VERSION
+        filemtime(SAFEQUOTE_THEME_DIR . '/assets/css/main.css')
+    );
+
+    // Components stylesheet - CRITICAL for visual parity
+    wp_enqueue_style(
+        'safequote-components',
+        SAFEQUOTE_THEME_URI . '/assets/css/components.css',
+        array('safequote-main-style'),
+        filemtime(SAFEQUOTE_THEME_DIR . '/assets/css/components.css')
+    );
+
+    // Animations stylesheet - CRITICAL for visual parity
+    wp_enqueue_style(
+        'safequote-animations',
+        SAFEQUOTE_THEME_URI . '/assets/css/animations.css',
+        array('safequote-components'),
+        filemtime(SAFEQUOTE_THEME_DIR . '/assets/css/animations.css')
     );
 
     // Theme style.css (required by WordPress, contains only metadata)
@@ -103,7 +127,7 @@ function safequote_enqueue_styles() {
         'safequote-theme-style',
         get_stylesheet_uri(),
         array(),
-        SAFEQUOTE_THEME_VERSION
+        filemtime(get_stylesheet_directory() . '/style.css')
     );
 }
 add_action('wp_enqueue_scripts', 'safequote_enqueue_styles');
@@ -295,6 +319,89 @@ function safequote_excerpt_more($more) {
     return '...';
 }
 add_filter('excerpt_more', 'safequote_excerpt_more');
+
+/**
+ * Get sample insurance quotes for display
+ *
+ * Returns sample insurance provider quotes (matches React insuranceData.js)
+ */
+function safequote_get_sample_insurance_quotes($vehicle = array()) {
+    // Default vehicle if not provided
+    if (empty($vehicle)) {
+        $vehicle = array(
+            'make' => 'your',
+            'model' => 'car',
+            'year' => 2024,
+            'condition' => 'used',
+            'safetyRating' => 4
+        );
+    }
+
+    // Base monthly price calculation
+    $base_price = 150; // Base price
+
+    // Adjust for condition
+    if (isset($vehicle['condition'])) {
+        if ('new' === $vehicle['condition']) {
+            $base_price = 165;
+        } elseif ('preowned' === $vehicle['condition']) {
+            $base_price = 155;
+        }
+    }
+
+    // Adjust for safety rating
+    if (isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5) {
+        $base_price -= 20; // Teen driver discount
+    }
+
+    return array(
+        array(
+            'provider'     => 'SafeGuard Insurance',
+            'url'          => 'https://www.progressive.com/',
+            'monthlyPrice' => $base_price - 2,
+            'rating'       => 4.8,
+            'discount'     => isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5 ? 15 : 0,
+            'recommended'  => true,
+            'coverage'     => array(
+                'Liability Coverage up to $100k',
+                'Collision Coverage',
+                'Comprehensive Coverage',
+                '24/7 Roadside Assistance',
+                'Teen Driver Discount'
+            ),
+        ),
+        array(
+            'provider'     => 'SecureRide Auto',
+            'url'          => 'https://www.statefarm.com/',
+            'monthlyPrice' => $base_price + 5,
+            'rating'       => 4.6,
+            'discount'     => isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5 ? 10 : 0,
+            'recommended'  => false,
+            'coverage'     => array(
+                'Liability Coverage up to $100k',
+                'Collision Coverage',
+                'Uninsured Motorist Protection',
+                'Online Account Management',
+                'Teen Driver Monitoring'
+            ),
+        ),
+        array(
+            'provider'     => 'DriveGuard Protection',
+            'url'          => 'https://www.allstate.com/',
+            'monthlyPrice' => $base_price + 12,
+            'rating'       => 4.5,
+            'discount'     => isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5 ? 12 : 0,
+            'recommended'  => false,
+            'coverage'     => array(
+                'Liability Coverage up to $100k',
+                'Collision and Comprehensive',
+                'Medical Payments Coverage',
+                'Accident Forgiveness',
+                'Young Driver Safety Course Discount'
+            ),
+        ),
+    );
+}
 
 /**
  * Custom template tags

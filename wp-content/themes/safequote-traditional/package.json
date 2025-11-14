@@ -1,0 +1,15 @@
+{
+  "name": "safequote-traditional-theme",
+  "version": "1.0.0",
+  "description": "Traditional WordPress theme for SafeQuote with Tailwind CSS",
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/css/tailwind.css -o ./assets/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./src/css/tailwind.css -o ./assets/css/tailwind.css --watch",
+    "dev": "npm run watch:css"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31"
+  }
+}
