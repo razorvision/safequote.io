@@ -321,6 +321,89 @@ function safequote_excerpt_more($more) {
 add_filter('excerpt_more', 'safequote_excerpt_more');
 
 /**
+ * Get sample insurance quotes for display
+ *
+ * Returns sample insurance provider quotes (matches React insuranceData.js)
+ */
+function safequote_get_sample_insurance_quotes($vehicle = array()) {
+    // Default vehicle if not provided
+    if (empty($vehicle)) {
+        $vehicle = array(
+            'make' => 'your',
+            'model' => 'car',
+            'year' => 2024,
+            'condition' => 'used',
+            'safetyRating' => 4
+        );
+    }
+
+    // Base monthly price calculation
+    $base_price = 150; // Base price
+
+    // Adjust for condition
+    if (isset($vehicle['condition'])) {
+        if ('new' === $vehicle['condition']) {
+            $base_price = 165;
+        } elseif ('preowned' === $vehicle['condition']) {
+            $base_price = 155;
+        }
+    }
+
+    // Adjust for safety rating
+    if (isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5) {
+        $base_price -= 20; // Teen driver discount
+    }
+
+    return array(
+        array(
+            'provider'     => 'SafeGuard Insurance',
+            'url'          => 'https://www.progressive.com/',
+            'monthlyPrice' => $base_price - 2,
+            'rating'       => 4.8,
+            'discount'     => isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5 ? 15 : 0,
+            'recommended'  => true,
+            'coverage'     => array(
+                'Liability Coverage up to $100k',
+                'Collision Coverage',
+                'Comprehensive Coverage',
+                '24/7 Roadside Assistance',
+                'Teen Driver Discount'
+            ),
+        ),
+        array(
+            'provider'     => 'SecureRide Auto',
+            'url'          => 'https://www.statefarm.com/',
+            'monthlyPrice' => $base_price + 5,
+            'rating'       => 4.6,
+            'discount'     => isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5 ? 10 : 0,
+            'recommended'  => false,
+            'coverage'     => array(
+                'Liability Coverage up to $100k',
+                'Collision Coverage',
+                'Uninsured Motorist Protection',
+                'Online Account Management',
+                'Teen Driver Monitoring'
+            ),
+        ),
+        array(
+            'provider'     => 'DriveGuard Protection',
+            'url'          => 'https://www.allstate.com/',
+            'monthlyPrice' => $base_price + 12,
+            'rating'       => 4.5,
+            'discount'     => isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5 ? 12 : 0,
+            'recommended'  => false,
+            'coverage'     => array(
+                'Liability Coverage up to $100k',
+                'Collision and Comprehensive',
+                'Medical Payments Coverage',
+                'Accident Forgiveness',
+                'Young Driver Safety Course Discount'
+            ),
+        ),
+    );
+}
+
+/**
  * Custom template tags
  */
 require_once SAFEQUOTE_THEME_DIR . '/inc/template-tags.php';
