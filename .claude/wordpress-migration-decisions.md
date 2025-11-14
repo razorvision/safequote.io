@@ -135,6 +135,68 @@ assets/css/
 └── main.css             # Compiled output
 ```
 
+### 4.5. **Visual Parity Requirements**
+**Decision**: WordPress theme must match React app EXACTLY - pixel-perfect where possible
+
+**Rationale**:
+- Maintain brand consistency across migration
+- Ensure users don't notice the platform change
+- Preserve professional appearance and user trust
+- No surprises for stakeholders or clients
+
+**Requirements**:
+1. **Color Variables**: Copy ALL CSS variables from `src/index.css` to WordPress theme
+   - Primary: `hsl(195, 90%, 40%)` (Teal) - NOT blue
+   - Secondary: `hsl(35, 85%, 90%)` (Warm Sand) - NOT green
+   - Body gradient: `bg-gradient-to-br from-white via-secondary to-white`
+   - All HSL color definitions must match exactly
+
+2. **Tailwind Classes**: Preserve EXACT Tailwind utility class combinations from React components
+   - Example: `rounded-xl shadow-md hover:shadow-xl transition-all duration-300`
+   - Border radius: Use `rounded-xl` and `rounded-2xl` as in React
+   - Shadows must match: `shadow-md`, `shadow-lg`, `shadow-xl`
+
+3. **Component Styling**: Each React component's visual appearance must be replicated exactly
+   - VehicleCard: Gradient buttons `from-primary to-teal-500`
+   - Hero: Background image with dual gradient overlays
+   - InsuranceComparison: Card-based layout, NOT tables
+   - TopSafetyPicks: Gradient background `from-primary/10 to-secondary/30`
+
+4. **Animations**: Match Framer Motion timing and effects
+   - Stagger delays: `index * 0.1s` for list items
+   - Fade duration: `0.5s` standard
+   - Hover transitions: `300ms` ease
+   - Scale animations: `0.95` to `1.0` on hover
+
+5. **Typography**: Same font families, sizes, weights, line heights
+   - Font: 'Inter' from Google Fonts
+   - Hero h1: `text-4xl md:text-6xl`
+   - Body text: `text-gray-600`
+   - Headings: `font-bold` or `font-semibold`
+
+6. **Gradients**: Preserve gradient directions and opacity stops
+   - Hero overlay: `from-black/70 via-black/40 to-transparent`
+   - Button gradients: `bg-gradient-to-r from-primary to-teal-500`
+   - Background gradients: `bg-gradient-to-br` with proper color stops
+
+7. **Spacing**: Maintain exact padding/margin values
+   - Sections: `py-16` or `py-20`
+   - Container: `mx-auto px-4`
+   - Major sections: `space-y-20`
+
+**Validation**:
+- Side-by-side screenshot comparison (React vs WordPress)
+- Color picker verification for key elements
+- Animation timing measurements in DevTools
+- Responsive breakpoint testing (mobile, tablet, desktop)
+- Cross-browser visual consistency
+
+**Implementation Notes**:
+- Create `.claude/visual-parity-checklist.md` for tracking
+- Each phase must validate visual parity before completion
+- Screenshot comparisons required in pull requests
+- Use browser DevTools color picker to verify exact matches
+
 ### 5. **JavaScript Architecture**
 **Decision**: Modular vanilla JavaScript with AJAX, no frameworks
 

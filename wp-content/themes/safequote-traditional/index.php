@@ -54,7 +54,7 @@ get_header();
                                     if (is_singular()) :
                                         the_title('<h1 class="entry-title text-2xl font-bold text-gray-900">', '</h1>');
                                     else :
-                                        the_title('<h2 class="entry-title text-2xl font-bold text-gray-900"><a href="' . esc_url(get_permalink()) . '" rel="bookmark" class="hover:text-blue-600 transition-colors">', '</a></h2>');
+                                        the_title('<h2 class="entry-title text-2xl font-bold text-gray-900"><a href="' . esc_url(get_permalink()) . '" rel="bookmark" class="hover:text-primary transition-colors">', '</a></h2>');
                                     endif;
                                     ?>
 
@@ -70,7 +70,7 @@ get_header();
                                                 <?php
                                                 printf(
                                                     esc_html__('by %s', 'safequote-traditional'),
-                                                    '<span class="author vcard"><a class="url fn n hover:text-blue-600" href="' . esc_url(get_author_posts_url(get_the_author_meta('ID'))) . '">' . esc_html(get_the_author()) . '</a></span>'
+                                                    '<span class="author vcard"><a class="url fn n hover:text-primary" href="' . esc_url(get_author_posts_url(get_the_author_meta('ID'))) . '">' . esc_html(get_the_author()) . '</a></span>'
                                                 );
                                                 ?>
                                             </span>
@@ -90,7 +90,7 @@ get_header();
                                     else :
                                         the_excerpt();
                                         ?>
-                                        <a href="<?php the_permalink(); ?>" class="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                        <a href="<?php the_permalink(); ?>" class="inline-block mt-4 px-6 py-2 bg-gradient-to-r from-primary to-teal-500 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all">
                                             <?php esc_html_e('Read More', 'safequote-traditional'); ?>
                                         </a>
                                         <?php
@@ -199,7 +199,7 @@ get_header();
                             foreach ($recent_posts as $post) :
                                 ?>
                                 <li>
-                                    <a href="<?php echo get_permalink($post['ID']); ?>" class="text-blue-600 hover:text-blue-800">
+                                    <a href="<?php echo get_permalink($post['ID']); ?>" class="text-primary hover:text-teal-600">
                                         <?php echo $post['post_title']; ?>
                                     </a>
                                 </li>

@@ -9,230 +9,181 @@ get_header();
 ?>
 
 <main id="primary" class="site-main">
-    <!-- Hero Section -->
-    <section class="hero bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20">
-        <div class="container mx-auto px-4">
-            <div class="max-w-4xl mx-auto text-center">
-                <h1 class="text-4xl md:text-5xl font-bold mb-6">
-                    <?php esc_html_e('Compare Insurance Quotes for High-Performance Vehicles', 'safequote-traditional'); ?>
+    <!-- Hero Section - EXACT MATCH to React Hero.jsx -->
+    <section class="hero relative text-white py-20 md:py-32 overflow-hidden">
+        <!-- Background Image and Gradients -->
+        <div class="absolute inset-0">
+            <img
+                alt="Parent handing car keys to a happy teenager"
+                class="w-full h-full object-cover"
+                src="https://images.unsplash.com/photo-1674559884947-a778697b6101" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-primary/30 to-transparent"></div>
+        </div>
+
+        <!-- Hero Content -->
+        <div class="container mx-auto px-4 relative">
+            <div class="text-center max-w-3xl mx-auto space-y-8 hero-animate">
+                <h1 class="text-4xl md:text-6xl font-bold" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+                    <?php esc_html_e('Find the Safest Car & Lowest Insurance Rate', 'safequote-traditional'); ?>
                 </h1>
-                <p class="text-xl mb-8 text-blue-100">
-                    <?php esc_html_e('Find the perfect high-performance car with comprehensive safety ratings and insurance comparison', 'safequote-traditional'); ?>
+                <p class="text-xl md:text-2xl text-white/90" style="text-shadow: 0 1px 5px rgba(0,0,0,0.5);">
+                    <?php esc_html_e("Discover top-rated safe cars and compare insurance quotes instantly. Your teen's safety and your budget, perfectly aligned.", 'safequote-traditional'); ?>
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button id="get-started-btn" class="px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
-                        <?php esc_html_e('Get Started', 'safequote-traditional'); ?>
-                    </button>
-                    <button id="learn-more-btn" class="px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-colors">
-                        <?php esc_html_e('Learn More', 'safequote-traditional'); ?>
-                    </button>
-                </div>
+                <button id="hero-get-started" class="inline-flex items-center bg-white text-primary hover:bg-white/90 text-lg px-8 py-6 rounded-lg font-semibold transition-all">
+                    <?php esc_html_e('Get Started', 'safequote-traditional'); ?>
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                </button>
             </div>
         </div>
     </section>
 
-    <!-- Vehicle Search Section -->
-    <section class="vehicle-search py-16 bg-gray-50">
-        <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-12"><?php esc_html_e('Find Your Vehicle', 'safequote-traditional'); ?></h2>
+    <!-- Main Content Container -->
+    <div class="container mx-auto px-4 py-12 space-y-20" id="start">
 
-            <!-- Search Filters -->
-            <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
-                <form id="vehicle-search-form" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label for="year" class="block text-sm font-medium text-gray-700 mb-1">
-                                <?php esc_html_e('Year', 'safequote-traditional'); ?>
-                            </label>
-                            <select id="year" name="year" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                                <option value=""><?php esc_html_e('Select Year', 'safequote-traditional'); ?></option>
-                                <?php
-                                $current_year = date('Y');
-                                for ($year = $current_year; $year >= 2010; $year--) {
-                                    echo '<option value="' . $year . '">' . $year . '</option>';
-                                }
-                                ?>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="make" class="block text-sm font-medium text-gray-700 mb-1">
-                                <?php esc_html_e('Make', 'safequote-traditional'); ?>
-                            </label>
-                            <select id="make" name="make" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                                <option value=""><?php esc_html_e('Select Make', 'safequote-traditional'); ?></option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="model" class="block text-sm font-medium text-gray-700 mb-1">
-                                <?php esc_html_e('Model', 'safequote-traditional'); ?>
-                            </label>
-                            <select id="model" name="model" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                                <option value=""><?php esc_html_e('Select Model', 'safequote-traditional'); ?></option>
-                            </select>
-                        </div>
-                    </div>
+        <!-- Features Section - EXACT MATCH to React Features.jsx -->
+        <section class="features py-16 bg-white fade-in" id="features">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+                        <?php esc_html_e('Your Journey to a Safer Drive Starts Here', 'safequote-traditional'); ?>
+                    </h2>
+                    <p class="text-gray-600 max-w-3xl mx-auto">
+                        <?php esc_html_e("Find the ideal safe car, get insurance quotes for a vehicle you already own, or find the best driver's ed classes.", 'safequote-traditional'); ?>
+                    </p>
+                </div>
 
-                    <!-- Additional Filters -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="min-price" class="block text-sm font-medium text-gray-700 mb-1">
-                                <?php esc_html_e('Min Price', 'safequote-traditional'); ?>
-                            </label>
-                            <input type="number" id="min-price" name="min_price" placeholder="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label for="max-price" class="block text-sm font-medium text-gray-700 mb-1">
-                                <?php esc_html_e('Max Price', 'safequote-traditional'); ?>
-                            </label>
-                            <input type="number" id="max-price" name="max_price" placeholder="200000"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
-
-                    <!-- Safety Rating Filter -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <?php esc_html_e('Minimum Safety Rating', 'safequote-traditional'); ?>
-                        </label>
-                        <div class="flex space-x-1" id="safety-rating-filter">
-                            <?php for ($i = 1; $i <= 5; $i++) : ?>
-                                <button type="button" data-rating="<?php echo $i; ?>" class="safety-star p-1">
-                                    <svg class="w-8 h-8 fill-gray-300 hover:fill-yellow-400 transition-colors" viewBox="0 0 20 20">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                                    </svg>
-                                </button>
-                            <?php endfor; ?>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-center pt-4">
-                        <button type="submit" class="px-8 py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
-                            <?php esc_html_e('Search Vehicles', 'safequote-traditional'); ?>
-                        </button>
-                        <button type="reset" class="ml-4 px-8 py-3 bg-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-300 transition-colors">
-                            <?php esc_html_e('Clear Filters', 'safequote-traditional'); ?>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Find a Safe Car Button -->
+                    <div class="w-full transform hover:scale-105 transition-transform">
+                        <button id="flow-find-car" class="w-full h-full p-6 text-lg flex flex-col gap-2 bg-gradient-to-r from-primary to-teal-500 hover:from-primary/90 hover:to-teal-500/90 text-white shadow-lg rounded-lg transition-all">
+                            <!-- Car Icon (matching React's lucide-react Car) -->
+                            <svg class="w-8 h-8 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 002 12v4c0 .6.4 1 1 1h2"></path>
+                                <circle cx="7" cy="17" r="2" stroke-width="2"></circle>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6"></path>
+                                <circle cx="17" cy="17" r="2" stroke-width="2"></circle>
+                            </svg>
+                            <span><?php esc_html_e('Find a Safe Car', 'safequote-traditional'); ?></span>
+                            <span class="text-sm font-normal text-white/80"><?php esc_html_e('Compare safety & prices', 'safequote-traditional'); ?></span>
                         </button>
                     </div>
+
+                    <!-- Get Insurance Quotes Button -->
+                    <div class="w-full transform hover:scale-105 transition-transform">
+                        <button id="flow-get-insurance" class="w-full h-full p-6 text-lg border-2 border-primary text-primary hover:bg-primary/10 hover:text-primary/90 flex flex-col gap-2 shadow-lg rounded-lg transition-all">
+                            <!-- Shield Check Icon -->
+                            <svg class="w-8 h-8 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                            <span><?php esc_html_e('Get Insurance Quotes', 'safequote-traditional'); ?></span>
+                            <span class="text-sm font-normal text-primary/80"><?php esc_html_e('For a car you own', 'safequote-traditional'); ?></span>
+                        </button>
+                    </div>
+
+                    <!-- Find Driver's Ed Button -->
+                    <div class="w-full transform hover:scale-105 transition-transform">
+                        <button id="flow-drivers-ed" class="w-full h-full p-6 text-lg border-2 border-primary text-primary hover:bg-primary/10 hover:text-primary/90 flex flex-col gap-2 shadow-lg rounded-lg transition-all">
+                            <!-- Book Open Icon -->
+                            <svg class="w-8 h-8 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                            <span><?php esc_html_e("Find Driver's Ed", 'safequote-traditional'); ?></span>
+                            <span class="text-sm font-normal text-primary/80"><?php esc_html_e('Local & online classes', 'safequote-traditional'); ?></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Safety Ratings Section - EXACT MATCH to React SafetyRatings.jsx -->
+        <section class="safety-ratings py-16 bg-white rounded-2xl shadow-lg border border-gray-100" id="safety-ratings">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-10">
+                    <svg class="w-12 h-12 mx-auto text-primary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <h2 class="text-3xl md:text-4xl font-bold mb-3 text-gray-900">
+                        <?php esc_html_e('Check Vehicle Safety Ratings', 'safequote-traditional'); ?>
+                    </h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">
+                        <?php esc_html_e('Get official 5-star safety ratings from the National Highway Traffic Safety Administration (NHTSA).', 'safequote-traditional'); ?>
+                    </p>
+                </div>
+
+                <!-- Safety Ratings Form - EXACT MATCH to React SafetyRatings.jsx -->
+                <form id="safety-ratings-form" class="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-8">
+                    <div class="md:col-span-1">
+                        <label for="year" class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e('Year', 'safequote-traditional'); ?></label>
+                        <input id="year" type="text" value="2024" placeholder="e.g., 2024" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+                    </div>
+                    <div class="md:col-span-1">
+                        <label for="make" class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e('Make', 'safequote-traditional'); ?></label>
+                        <input id="make" type="text" value="Toyota" placeholder="e.g., Toyota" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+                    </div>
+                    <div class="md:col-span-1">
+                        <label for="model" class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e('Model', 'safequote-traditional'); ?></label>
+                        <input id="model" type="text" value="Camry" placeholder="e.g., Camry" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+                    </div>
+                    <button type="submit" class="w-full md:col-span-1 bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-md transition-colors flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <?php esc_html_e('Check Rating', 'safequote-traditional'); ?>
+                    </button>
                 </form>
-            </div>
 
-            <!-- Vehicle Grid (populated by JavaScript) -->
-            <div id="vehicle-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Vehicles will be loaded here dynamically -->
-            </div>
-
-            <!-- Loading Indicator -->
-            <div id="loading-indicator" class="hidden text-center py-8">
-                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                <p class="mt-4 text-gray-600"><?php esc_html_e('Loading vehicles...', 'safequote-traditional'); ?></p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features py-16 bg-white">
-        <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-12"><?php esc_html_e('Why Choose SafeQuote?', 'safequote-traditional'); ?></h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2"><?php esc_html_e('Safety First', 'safequote-traditional'); ?></h3>
-                    <p class="text-gray-600"><?php esc_html_e('Access comprehensive NHTSA safety ratings for all vehicles', 'safequote-traditional'); ?></p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2"><?php esc_html_e('Best Rates', 'safequote-traditional'); ?></h3>
-                    <p class="text-gray-600"><?php esc_html_e('Compare insurance quotes from multiple providers instantly', 'safequote-traditional'); ?></p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2"><?php esc_html_e('Fast & Easy', 'safequote-traditional'); ?></h3>
-                    <p class="text-gray-600"><?php esc_html_e('Get personalized recommendations in minutes', 'safequote-traditional'); ?></p>
+                <!-- Safety Ratings Results (will be populated via JavaScript) -->
+                <div id="safety-ratings-results" class="hidden">
+                    <!-- Results will be dynamically inserted here -->
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Insurance Comparison Section -->
-    <section class="insurance-comparison py-16 bg-gray-50">
-        <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-12"><?php esc_html_e('Compare Insurance Providers', 'safequote-traditional'); ?></h2>
+        <!-- Flow Content Container (for dynamic content) -->
+        <div id="flow-content" class="hidden space-y-12">
+            <!-- Dynamic content will be loaded here based on flow selection -->
+            <button id="start-over" class="text-primary hover:underline font-semibold">
+                &larr; <?php esc_html_e('Start Over', 'safequote-traditional'); ?>
+            </button>
 
-            <div class="max-w-6xl mx-auto">
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-900"><?php esc_html_e('Provider', 'safequote-traditional'); ?></th>
-                                <th class="px-6 py-4 text-center text-sm font-medium text-gray-900"><?php esc_html_e('Monthly Premium', 'safequote-traditional'); ?></th>
-                                <th class="px-6 py-4 text-center text-sm font-medium text-gray-900"><?php esc_html_e('Coverage', 'safequote-traditional'); ?></th>
-                                <th class="px-6 py-4 text-center text-sm font-medium text-gray-900"><?php esc_html_e('Rating', 'safequote-traditional'); ?></th>
-                                <th class="px-6 py-4 text-center text-sm font-medium text-gray-900"><?php esc_html_e('Action', 'safequote-traditional'); ?></th>
-                            </tr>
-                        </thead>
-                        <tbody id="insurance-comparison-table" class="bg-white divide-y divide-gray-200">
-                            <!-- Insurance providers will be loaded here dynamically -->
-                        </tbody>
-                    </table>
+            <!-- Vehicle Search Section (shown in findCar flow) -->
+            <div id="vehicles-section" class="hidden">
+                <!-- Top Safety Picks -->
+                <div id="top-safety-picks" class="py-8">
+                    <!-- Content loaded dynamically -->
+                </div>
+
+                <!-- Search Filters -->
+                <div id="search-filters" class="py-8">
+                    <!-- Content loaded dynamically -->
+                </div>
+
+                <!-- Vehicle Grid -->
+                <div id="vehicle-grid" class="py-8">
+                    <!-- Content loaded dynamically -->
                 </div>
             </div>
-        </div>
-    </section>
 
-    <!-- CTA Section -->
-    <section class="cta py-16 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-3xl font-bold mb-4"><?php esc_html_e('Ready to Find Your Perfect Vehicle?', 'safequote-traditional'); ?></h2>
-            <p class="text-xl mb-8 text-blue-100"><?php esc_html_e('Start comparing safety ratings and insurance quotes today', 'safequote-traditional'); ?></p>
-            <a href="#vehicle-search" class="inline-block px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
-                <?php esc_html_e('Start Your Search', 'safequote-traditional'); ?>
-            </a>
-        </div>
-    </section>
+            <!-- Insurance Section (shown in getInsurance flow) -->
+            <div id="insurance-section" class="hidden py-8">
+                <!-- Content loaded dynamically -->
+            </div>
 
-    <!-- Selected Vehicles Modal Container -->
-    <div id="selected-vehicles-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg max-w-4xl w-full p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-2xl font-bold"><?php esc_html_e('Selected Vehicles for Comparison', 'safequote-traditional'); ?></h3>
-                    <button id="close-modal" class="text-gray-500 hover:text-gray-700">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-                <div id="selected-vehicles-list">
-                    <!-- Selected vehicles will be displayed here -->
-                </div>
-                <div class="mt-6 flex justify-end space-x-4">
-                    <button id="clear-selection" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
-                        <?php esc_html_e('Clear Selection', 'safequote-traditional'); ?>
-                    </button>
-                    <button id="compare-vehicles" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                        <?php esc_html_e('Compare Insurance Quotes', 'safequote-traditional'); ?>
-                    </button>
-                </div>
+            <!-- Driver's Ed Section (shown in driversEd flow) -->
+            <div id="drivers-ed-section" class="hidden py-8">
+                <!-- Content loaded dynamically -->
             </div>
         </div>
     </div>
-</main><!-- #primary -->
+
+</main>
 
 <?php
 get_footer();
+?>

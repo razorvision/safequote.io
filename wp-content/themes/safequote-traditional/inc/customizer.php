@@ -343,29 +343,10 @@ add_action('customize_preview_init', 'safequote_customize_preview_js');
 
 /**
  * Output Customizer CSS in header
+ * DISABLED - Using compiled Tailwind CSS for all colors and styling
+ * The customizer function is kept for reference but not hooked to wp_head
  */
 function safequote_customizer_css() {
-    ?>
-    <style type="text/css">
-        :root {
-            --primary-color: <?php echo esc_attr(get_theme_mod('primary_color', '#3B82F6')); ?>;
-            --secondary-color: <?php echo esc_attr(get_theme_mod('secondary_color', '#10B981')); ?>;
-            --container-width: <?php echo esc_attr(get_theme_mod('container_width', '1200')); ?>px;
-        }
-
-        /* Apply custom colors */
-        .bg-primary { background-color: var(--primary-color); }
-        .text-primary { color: var(--primary-color); }
-        .border-primary { border-color: var(--primary-color); }
-
-        .bg-secondary { background-color: var(--secondary-color); }
-        .text-secondary { color: var(--secondary-color); }
-        .border-secondary { border-color: var(--secondary-color); }
-
-        .container {
-            max-width: var(--container-width);
-        }
-    </style>
-    <?php
+    // Disabled to allow compiled Tailwind CSS to control all styling
+    // Previously output custom colors and container width
 }
-add_action('wp_head', 'safequote_customizer_css');

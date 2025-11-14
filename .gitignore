@@ -1,4 +1,5 @@
 node_modules/
+wp-content/themes/safequote-traditional/node_modules/
 dist/
 build/
 .DS_Store

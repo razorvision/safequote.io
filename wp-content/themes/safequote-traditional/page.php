@@ -38,7 +38,7 @@ get_header();
                         wp_link_pages(array(
                             'before' => '<div class="page-links mt-8">' . esc_html__('Pages:', 'safequote-traditional'),
                             'after'  => '</div>',
-                            'link_before' => '<span class="inline-block px-3 py-1 mx-1 bg-blue-100 text-blue-600 rounded">',
+                            'link_before' => '<span class="inline-block px-3 py-1 mx-1 bg-secondary text-primary rounded">',
                             'link_after'  => '</span>',
                         ));
                         ?>

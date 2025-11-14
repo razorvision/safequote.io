@@ -1,36 +1,52 @@
 /**
- * Custom Component Styles
+ * Custom Component Styles - Exact Match to React App
+ * Updated with correct teal/sand color scheme
  */
 
 @layer components {
     /* Navigation Components */
     .nav-link {
-        @apply px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-500 transition-colors;
+        @apply px-3 py-2 rounded-md text-sm font-medium text-white;
+        @apply hover:bg-primary hover:bg-opacity-20 transition-all duration-300;
     }
 
     .nav-link-active {
-        @apply bg-blue-500;
+        @apply bg-primary bg-opacity-20;
     }
 
-    /* Vehicle Cards */
+    /* Vehicle Cards - Matching React */
     .vehicle-card {
-        @apply bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden;
+        @apply bg-white rounded-xl shadow-md overflow-hidden;
+        @apply transition-all duration-300;
+        @apply hover:shadow-xl hover:-translate-y-1;
     }
 
     .vehicle-card-image {
         @apply w-full h-48 object-cover;
+        @apply transition-transform duration-300;
+    }
+
+    .vehicle-card:hover .vehicle-card-image {
+        @apply scale-110;
     }
 
     .vehicle-card-body {
-        @apply p-4;
+        @apply p-6 space-y-4;
     }
 
     .vehicle-card-title {
-        @apply text-lg font-semibold text-gray-900 mb-2;
+        @apply text-xl font-semibold text-gray-900 mb-2;
     }
 
     .vehicle-card-price {
-        @apply text-2xl font-bold text-blue-600 mb-2;
+        @apply text-2xl font-bold text-primary mb-2;
+    }
+
+    .vehicle-card-button {
+        @apply w-full bg-gradient-to-r from-primary to-teal-500;
+        @apply text-white py-3 rounded-xl font-semibold;
+        @apply transition-all duration-300;
+        @apply hover:shadow-lg hover:scale-[1.02];
     }
 
     /* Safety Rating Stars */
@@ -52,7 +68,14 @@
 
     /* Insurance Provider Cards */
     .insurance-card {
-        @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
+        @apply bg-white rounded-xl shadow-md p-6;
+        @apply border border-gray-100;
+        @apply transition-all duration-300;
+        @apply hover:shadow-xl hover:border-primary;
+    }
+
+    .insurance-card.featured {
+        @apply border-2 border-primary shadow-xl;
     }
 
     .insurance-card-header {
@@ -64,7 +87,7 @@
     }
 
     .insurance-card-premium {
-        @apply text-3xl font-bold text-green-600;
+        @apply text-3xl font-bold text-gray-900;
     }
 
     .insurance-card-features {
@@ -79,17 +102,23 @@
         @apply w-4 h-4 mr-2 text-green-500;
     }
 
-    /* Buttons */
+    /* Buttons - Updated with correct colors */
     .btn {
-        @apply inline-block px-6 py-3 font-semibold rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+        @apply inline-block px-6 py-3 font-semibold rounded-xl;
+        @apply transition-all duration-300;
+        @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
     }
 
     .btn-primary {
-        @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+        @apply bg-gradient-to-r from-primary to-teal-500 text-white;
+        @apply hover:shadow-lg hover:scale-105;
+        @apply focus:ring-primary;
     }
 
     .btn-secondary {
-        @apply bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-500;
+        @apply bg-secondary text-secondary-foreground;
+        @apply hover:bg-opacity-90 hover:shadow-lg;
+        @apply focus:ring-secondary;
     }
 
     .btn-success {
@@ -101,16 +130,21 @@
     }
 
     .btn-outline {
-        @apply bg-transparent border-2 border-current;
+        @apply bg-transparent border-2 border-primary text-primary;
+        @apply hover:bg-primary hover:text-white;
     }
 
-    /* Form Elements */
+    /* Form Elements - Updated focus colors */
     .form-input {
-        @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500;
+        @apply w-full px-4 py-2 border border-gray-300 rounded-lg;
+        @apply focus:ring-2 focus:ring-primary focus:ring-opacity-20;
+        @apply focus:border-primary transition-all duration-200;
     }
 
     .form-select {
-        @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white;
+        @apply w-full px-4 py-2 border border-gray-300 rounded-lg bg-white;
+        @apply focus:ring-2 focus:ring-primary focus:ring-opacity-20;
+        @apply focus:border-primary transition-all duration-200;
     }
 
     .form-label {
@@ -121,17 +155,21 @@
         @apply text-sm text-red-600 mt-1;
     }
 
-    /* Modals */
+    /* Modals - Matching React */
     .modal-backdrop {
         @apply fixed inset-0 bg-black bg-opacity-50 z-40;
+        @apply backdrop-blur-sm;
     }
 
     .modal-content {
-        @apply fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl z-50 max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+        @apply fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+        @apply bg-white rounded-2xl shadow-2xl z-50;
+        @apply max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+        animation: scaleIn 0.3s ease-out;
     }
 
     .modal-header {
-        @apply flex items-center justify-between p-6 border-b;
+        @apply flex items-center justify-between p-6 border-b border-gray-200;
     }
 
     .modal-body {
@@ -139,12 +177,12 @@
     }
 
     .modal-footer {
-        @apply flex items-center justify-end space-x-4 p-6 border-t;
+        @apply flex items-center justify-end space-x-4 p-6 border-t border-gray-200;
     }
 
-    /* Alerts */
+    /* Alerts/Notifications */
     .alert {
-        @apply p-4 rounded-md mb-4;
+        @apply p-4 rounded-lg mb-4;
     }
 
     .alert-success {
@@ -160,12 +198,12 @@
     }
 
     .alert-info {
-        @apply bg-blue-50 text-blue-800 border border-blue-200;
+        @apply bg-primary bg-opacity-10 text-primary border border-primary border-opacity-20;
     }
 
     /* Loading States */
     .skeleton {
-        @apply animate-pulse bg-gray-200 rounded;
+        @apply animate-pulse bg-gray-200 rounded-lg;
     }
 
     .skeleton-text {
@@ -180,21 +218,40 @@
         @apply h-64 skeleton;
     }
 
-    /* Comparison Table */
-    .comparison-table {
-        @apply w-full border-collapse;
+    /* Hero Section - Matching React */
+    .hero-overlay {
+        background: linear-gradient(
+            to right,
+            rgba(0, 0, 0, 0.7),
+            rgba(0, 0, 0, 0.4),
+            transparent
+        );
     }
 
-    .comparison-table th {
-        @apply bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+    /* Top Safety Section - Matching React gradient */
+    .top-safety-section {
+        background: linear-gradient(
+            135deg,
+            hsla(195, 90%, 40%, 0.1) 0%,
+            hsla(35, 85%, 90%, 0.3) 100%
+        );
+        @apply rounded-2xl;
     }
 
-    .comparison-table td {
-        @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+    /* Filter Components */
+    .filter-radio-label {
+        @apply block px-3 py-2 rounded-lg;
+        @apply border border-gray-300 cursor-pointer;
+        @apply transition-all duration-200;
     }
 
-    .comparison-table tbody tr {
-        @apply border-t border-gray-200 hover:bg-gray-50;
+    .filter-radio-input:checked + .filter-radio-label {
+        @apply bg-primary text-white border-primary;
+    }
+
+    /* Comparison Table - Card-based layout */
+    .comparison-grid {
+        @apply grid grid-cols-1 md:grid-cols-3 gap-6;
     }
 
     /* WordPress Specific */
@@ -210,25 +267,63 @@
         @apply btn btn-primary;
     }
 
-    /* Pagination */
+    /* Pagination - Updated colors */
     .pagination {
         @apply flex items-center justify-center space-x-2;
     }
 
     .page-numbers {
-        @apply px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50;
+        @apply px-3 py-2 text-sm border border-gray-300 rounded-lg;
+        @apply hover:bg-gray-50 transition-all duration-200;
     }
 
     .page-numbers.current {
-        @apply bg-blue-600 text-white border-blue-600;
+        @apply bg-primary text-white border-primary;
     }
 
-    /* Mobile Menu */
+    /* Mobile Menu - Updated colors */
     .mobile-menu-items {
         @apply space-y-1;
     }
 
     .mobile-menu-items a {
-        @apply block px-3 py-2 text-base font-medium text-white rounded-md hover:bg-blue-600;
+        @apply block px-3 py-2 text-base font-medium text-white rounded-md;
+        @apply hover:bg-primary hover:bg-opacity-20 transition-all duration-200;
+    }
+
+    /* Stagger animations for lists */
+    .stagger-item {
+        opacity: 0;
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    .stagger-item:nth-child(1) { animation-delay: 0s; }
+    .stagger-item:nth-child(2) { animation-delay: 0.1s; }
+    .stagger-item:nth-child(3) { animation-delay: 0.2s; }
+    .stagger-item:nth-child(4) { animation-delay: 0.3s; }
+    .stagger-item:nth-child(5) { animation-delay: 0.4s; }
+    .stagger-item:nth-child(6) { animation-delay: 0.5s; }
+}
+
+/* Animations - Matching Framer Motion */
+@keyframes scaleIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
     }
 }
