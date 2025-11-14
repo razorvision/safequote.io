@@ -1,0 +1,294 @@
+/**
+ * Animation Styles
+ */
+
+@layer utilities {
+    /* Fade Animations */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .fade-out {
+        animation: fadeOut 0.3s ease-in-out;
+    }
+
+    /* Slide Animations */
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideInLeft {
+        from {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideInUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideInDown {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .slide-in-right {
+        animation: slideInRight 0.3s ease-out;
+    }
+
+    .slide-in-left {
+        animation: slideInLeft 0.3s ease-out;
+    }
+
+    .slide-in-up {
+        animation: slideInUp 0.3s ease-out;
+    }
+
+    .slide-in-down {
+        animation: slideInDown 0.3s ease-out;
+    }
+
+    /* Scale Animations */
+    @keyframes scaleIn {
+        from {
+            transform: scale(0.9);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .scale-in {
+        animation: scaleIn 0.2s ease-out;
+    }
+
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+
+    /* Spin Animation */
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+
+    /* Bounce Animation */
+    @keyframes bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .bounce {
+        animation: bounce 1s ease-in-out infinite;
+    }
+
+    /* Shimmer Effect for Loading */
+    @keyframes shimmer {
+        0% {
+            background-position: -1000px 0;
+        }
+        100% {
+            background-position: 1000px 0;
+        }
+    }
+
+    .shimmer {
+        background: linear-gradient(
+            90deg,
+            #f0f0f0 0%,
+            #f8f8f8 50%,
+            #f0f0f0 100%
+        );
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite;
+    }
+
+    /* Transition Utilities */
+    .transition-all-300 {
+        transition: all 0.3s ease;
+    }
+
+    .transition-colors-200 {
+        transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .transition-transform-200 {
+        transition: transform 0.2s ease;
+    }
+
+    .transition-opacity-300 {
+        transition: opacity 0.3s ease;
+    }
+
+    /* Hover Effects */
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .hover-grow {
+        transition: transform 0.2s ease;
+    }
+
+    .hover-grow:hover {
+        transform: scale(1.05);
+    }
+
+    .hover-shrink {
+        transition: transform 0.2s ease;
+    }
+
+    .hover-shrink:hover {
+        transform: scale(0.95);
+    }
+
+    /* Loading Spinner */
+    .spinner {
+        border: 3px solid rgba(59, 130, 246, 0.1);
+        border-left-color: rgb(59, 130, 246);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+
+    /* Smooth Scroll Behavior */
+    .smooth-scroll {
+        scroll-behavior: smooth;
+    }
+
+    /* Visibility Transitions */
+    .show {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .hide {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    /* Card Hover Effects */
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Button Press Effect */
+    .btn-press {
+        transition: transform 0.1s ease;
+    }
+
+    .btn-press:active {
+        transform: scale(0.98);
+    }
+
+    /* Entrance Animations for Scroll Reveal */
+    .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.6s ease;
+    }
+
+    .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Stagger Animation for Lists */
+    .stagger-item {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .stagger-item:nth-child(1) { animation-delay: 0.1s; }
+    .stagger-item:nth-child(2) { animation-delay: 0.2s; }
+    .stagger-item:nth-child(3) { animation-delay: 0.3s; }
+    .stagger-item:nth-child(4) { animation-delay: 0.4s; }
+    .stagger-item:nth-child(5) { animation-delay: 0.5s; }
+    .stagger-item:nth-child(6) { animation-delay: 0.6s; }
+
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}

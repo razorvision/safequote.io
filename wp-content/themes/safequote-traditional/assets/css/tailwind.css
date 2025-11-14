@@ -1,0 +1,42 @@
+/**
+ * Tailwind CSS Base Configuration
+ * This file is compiled to main.css
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Base Styles */
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply antialiased;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        @apply font-bold;
+    }
+
+    a {
+        @apply transition-colors duration-200;
+    }
+
+    /* WordPress Admin Bar Adjustment */
+    .admin-bar .site-header {
+        top: 32px;
+    }
+
+    @media screen and (max-width: 782px) {
+        .admin-bar .site-header {
+            top: 46px;
+        }
+    }
+}
+
+/* Import component styles */
+@import './components.css';
+@import './animations.css';
