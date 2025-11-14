@@ -1,0 +1,20 @@
+/*
+Theme Name: SafeQuote Traditional
+Theme URI: https://safequote.io
+Author: SafeQuote Team
+Author URI: https://safequote.io
+Description: A traditional WordPress theme for SafeQuote - Compare insurance quotes for high-risk vehicles and find the perfect high-performance car with comprehensive safety ratings
+Version: 1.0.0
+License: GPL v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: safequote-traditional
+Tags: custom-background, custom-colors, custom-header, custom-menu, featured-images, footer-widgets, full-width-template, theme-options, threaded-comments, translation-ready
+Requires at least: 6.0
+Tested up to: 6.7
+Requires PHP: 7.4
+*/
+
+/*
+ * This file is only used for WordPress theme metadata.
+ * All actual styles are in assets/css/main.css compiled from Tailwind CSS
+ */
