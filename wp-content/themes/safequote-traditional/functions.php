@@ -208,6 +208,20 @@ function safequote_enqueue_scripts() {
         true
     );
 
+    // Safety Ratings page functionality (only on safety ratings page)
+    if (is_page('safequote-safety-ratings')) {
+        wp_enqueue_script(
+            'safequote-safety-ratings',
+            SAFEQUOTE_THEME_URI . '/assets/js/safety-ratings.js',
+            array('safequote-main'),
+            SAFEQUOTE_THEME_VERSION,
+            true
+        );
+
+        // Localize script with theme URI
+        wp_localize_script('safequote-safety-ratings', 'SAFEQUOTE_THEME_URI', SAFEQUOTE_THEME_URI);
+    }
+
     // Localize script for AJAX
     wp_localize_script('safequote-main', 'safequote_ajax', array(
         'ajax_url' => admin_url('admin-ajax.php'),
@@ -319,6 +333,36 @@ function safequote_excerpt_more($more) {
     return '...';
 }
 add_filter('excerpt_more', 'safequote_excerpt_more');
+
+/**
+ * Create Safety Ratings page programmatically
+ *
+ * Creates the Safety Ratings page if it doesn't exist and assigns the custom template
+ */
+function safequote_create_safety_ratings_page() {
+    // Check if page already exists
+    $safety_ratings_page = get_page_by_path('safequote-safety-ratings');
+
+    if (!$safety_ratings_page) {
+        // Create the page
+        $page_id = wp_insert_post(array(
+            'post_title'     => 'Safety Ratings',
+            'post_name'      => 'safequote-safety-ratings',
+            'post_content'   => 'Get official 5-star safety ratings from the National Highway Traffic Safety Administration (NHTSA). Search any vehicle to view its complete safety ratings and crash test results.',
+            'post_type'      => 'page',
+            'post_status'    => 'publish',
+            'post_author'    => 1, // Admin user
+            'comment_status' => 'closed',
+            'ping_status'    => 'closed',
+        ));
+
+        if ($page_id && !is_wp_error($page_id)) {
+            // Assign the custom template
+            update_post_meta($page_id, '_wp_page_template', 'page-safequote-safety-ratings.php');
+        }
+    }
+}
+add_action('after_setup_theme', 'safequote_create_safety_ratings_page', 11);
 
 /**
  * Get sample insurance quotes for display
