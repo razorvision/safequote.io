@@ -18,7 +18,8 @@ $top_vehicles = isset( $vehicles ) && ! empty( $vehicles ) ? array_slice( $vehic
 	<!-- Header -->
 	<div class="flex items-center gap-3 mb-6">
 		<svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+			<circle cx="12" cy="8" r="6" stroke="currentColor" stroke-width="2" fill="none"></circle>
+			<path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
 		</svg>
 		<h2 class="text-3xl font-bold text-gray-900">
 			<?php esc_html_e( 'Top Safety Picks', 'safequote-traditional' ); ?>
@@ -45,6 +46,7 @@ $top_vehicles = isset( $vehicles ) && ! empty( $vehicles ) ? array_slice( $vehic
 					src="<?php echo esc_url( $vehicle['image'] ); ?>"
 					alt="<?php echo esc_attr( $vehicle['model'] ); ?>"
 					class="w-full h-20 object-contain rounded-md mb-2"
+					onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNmM2Y0ZjYiLz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMDAsIDE1MCkiPgogICAgPHBhdGggZD0iTSA2MCAxMGgyMGM2IDAgMTAtNCAxMC0xMHYtMzBjMC05LTctMTctMTUtMTlDNTcgLTU0IDMwIC02MCAzMCAtNjBzLTEzLTE0LTIyLTIzYy01LTQtMTEtNy0xOC03aC03MGMtNiAwLTExIDQtMTQgOWwtMTQgMjlBMzcgMzcgMCAwMC04MCAtNDB2NDBjMCA2IDQgMTAgMTAgMTBoMjAiIHN0cm9rZT0iIzljYTNhZiIgc3Ryb2tlLXdpZHRoPSI4IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICAgIDxjaXJjbGUgY3g9Ii00MCIgY3k9IjEwIiByPSIxNSIgc3Ryb2tlPSIjOWNhM2FmIiBzdHJva2Utd2lkdGg9IjgiIGZpbGw9Im5vbmUiLz4KICAgIDxwYXRoIGQ9Ik0gLTIwIDEwaDQwIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgICA8Y2lyY2xlIGN4PSI0MCIgY3k9IjEwIiByPSIxNSIgc3Ryb2tlPSIjOWNhM2FmIiBzdHJva2Utd2lkdGg9IjgiIGZpbGw9Im5vbmUiLz4KICA8L2c+Cjwvc3ZnPg==';"
 				/>
 				<p class="font-semibold text-sm text-gray-800">
 					<?php echo esc_html( $vehicle['make'] . ' ' . $vehicle['model'] ); ?>

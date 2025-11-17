@@ -13,9 +13,9 @@
  *     @type string $model           Vehicle model
  *     @type string $type            Vehicle type (SUV, Sedan, etc.)
  *     @type float  $price           Vehicle price
- *     @type int    $safetyRating    Safety rating (0-5)
+ *     @type int    $safety_rating   Safety rating (0-5)
  *     @type int    $mileage         Vehicle mileage
- *     @type array  $safetyFeatures  Array of safety features
+ *     @type array  $safety_features Array of safety features
  *     @type string $condition       Vehicle condition (New, Preowned)
  * }
  * @param int $index The index of the vehicle in the grid (for stagger animation)
@@ -28,22 +28,23 @@ if ( ! isset( $vehicle ) ) {
 $delay = isset( $index ) ? $index * 0.1 : 0;
 ?>
 
-<div class="stagger-item vehicle-card border border-gray-100 group" style="animation-delay: <?php echo esc_attr( $delay ); ?>s;">
+<div class="stagger-item bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group" style="animation-delay: <?php echo esc_attr( $delay ); ?>s;">
 	<div class="relative overflow-hidden">
 		<img
 			src="<?php echo esc_url( $vehicle['image'] ); ?>"
 			alt="<?php echo esc_attr( $vehicle['year'] . ' ' . $vehicle['make'] . ' ' . $vehicle['model'] ); ?>"
-			class="vehicle-card-image group-hover:scale-110"
+			class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+			onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNmM2Y0ZjYiLz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMDAsIDE1MCkiPgogICAgPHBhdGggZD0iTSA2MCAxMGgyMGM2IDAgMTAtNCAxMC0xMHYtMzBjMC05LTctMTctMTUtMTlDNTcgLTU0IDMwIC02MCAzMCAtNjBzLTEzLTE0LTIyLTIzYy01LTQtMTEtNy0xOC03aC03MGMtNiAwLTExIDQtMTQgOWwtMTQgMjlBMzcgMzcgMCAwMC04MCAtNDB2NDBjMCA2IDQgMTAgMTAgMTBoMjAiIHN0cm9rZT0iIzljYTNhZiIgc3Ryb2tlLXdpZHRoPSI4IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICAgIDxjaXJjbGUgY3g9Ii00MCIgY3k9IjEwIiByPSIxNSIgc3Ryb2tlPSIjOWNhM2FmIiBzdHJva2Utd2lkdGg9IjgiIGZpbGw9Im5vbmUiLz4KICAgIDxwYXRoIGQ9Ik0gLTIwIDEwaDQwIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgICA8Y2lyY2xlIGN4PSI0MCIgY3k9IjEwIiByPSIxNSIgc3Ryb2tlPSIjOWNhM2FmIiBzdHJva2Utd2lkdGg9IjgiIGZpbGw9Im5vbmUiLz4KICA8L2c+Cjwvc3ZnPg==';"
 		/>
 		<span class="absolute top-3 right-3 bg-white/90 text-gray-900 px-3 py-1 rounded-lg text-sm font-medium shadow backdrop-blur-sm">
 			<?php echo esc_html( $vehicle['condition'] ); ?>
 		</span>
 	</div>
 
-	<div class="vehicle-card-body">
+	<div class="p-5 space-y-4">
 		<!-- Vehicle Name and Type -->
 		<div>
-			<h3 class="vehicle-card-title">
+			<h3 class="text-xl font-semibold text-gray-900 mb-2">
 				<?php echo esc_html( $vehicle['year'] . ' ' . $vehicle['make'] . ' ' . $vehicle['model'] ); ?>
 			</h3>
 			<p class="text-gray-600 text-sm">
@@ -56,17 +57,17 @@ $delay = isset( $index ) ? $index * 0.1 : 0;
 			<!-- Safety Rating -->
 			<div class="flex items-center gap-1">
 				<svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+					<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
 				</svg>
 				<div class="flex ml-1">
 					<?php for ( $i = 0; $i < 5; $i++ ) : ?>
-						<svg class="w-4 h-4 <?php echo $i < $vehicle['safetyRating'] ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'; ?>" fill="currentColor" viewBox="0 0 20 20">
+						<svg class="w-4 h-4 <?php echo $i < $vehicle['safety_rating'] ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'; ?>" fill="currentColor" viewBox="0 0 20 20">
 							<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
 						</svg>
 					<?php endfor; ?>
 				</div>
 				<span class="font-semibold text-base ml-1">
-					(<?php echo esc_html( $vehicle['safetyRating'] ); ?>/5)
+					(<?php echo esc_html( $vehicle['safety_rating'] ); ?>/5)
 				</span>
 			</div>
 
@@ -89,7 +90,8 @@ $delay = isset( $index ) ? $index * 0.1 : 0;
 			</div>
 			<div class="flex items-center gap-2">
 				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+					<path d="m12 14 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+					<path d="M3.34 19a10 10 0 1 1 17.32 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
 				</svg>
 				<span><?php echo esc_html( number_format( $vehicle['mileage'] ) ); ?> miles</span>
 			</div>
@@ -102,7 +104,7 @@ $delay = isset( $index ) ? $index * 0.1 : 0;
 			</p>
 			<div class="flex flex-wrap gap-1">
 				<?php
-				$featured_features = array_slice( $vehicle['safetyFeatures'], 0, 3 );
+				$featured_features = array_slice( $vehicle['safety_features'], 0, 3 );
 				foreach ( $featured_features as $feature ) :
 				?>
 					<span class="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs border border-gray-200">
@@ -114,7 +116,7 @@ $delay = isset( $index ) ? $index * 0.1 : 0;
 
 		<!-- Get Insurance Quotes Button -->
 		<button
-			class="vehicle-card-button mt-4"
+			class="w-full mt-4 bg-gradient-to-r from-primary to-teal-500 hover:from-primary/90 hover:to-teal-500/90 text-white py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
 			data-vehicle-id="<?php echo esc_attr( $vehicle['id'] ); ?>"
 			data-vehicle-make="<?php echo esc_attr( $vehicle['make'] ); ?>"
 			data-vehicle-model="<?php echo esc_attr( $vehicle['model'] ); ?>"

@@ -16,7 +16,14 @@ Instructions for all Claude interactions and AI agents working on SafeQuote.
    - Note file locations
    - Check implementation notes
 
-3. **Know the codebase structure**:
+3. **For React-to-WordPress migrations**:
+   - ALWAYS compare React component styles line-by-line
+   - Extract ALL Tailwind classes and custom CSS
+   - Include hover states, transitions, and animations
+   - Run `npm run build:css` after any style changes
+   - Never skip visual parity verification
+
+4. **Know the codebase structure**:
    ```
    src/
    ├── components/       (React components)
@@ -26,7 +33,7 @@ Instructions for all Claude interactions and AI agents working on SafeQuote.
    └── main.jsx         (Entry point)
    ```
 
-4. **Understand current data flow**:
+5. **Understand current data flow**:
    - Vehicles: Static JS array in `src/lib/vehicleData.js`
    - Insurance: Calculated from formula in `src/lib/insuranceData.js`
    - NHTSA API: Direct calls from `SafetyRatings.jsx`
@@ -200,6 +207,63 @@ const filtered = useMemo(
 ```
 
 **Principle**: Don't recalculate unless inputs change.
+
+### 8. Style Migration Accuracy
+
+**Bad**: Partial style copying
+```php
+// Missing border and hover effects
+<div class="bg-white rounded-xl shadow-md">
+```
+
+**Good**: Complete style replication
+```php
+// All styles from React preserved
+<div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group">
+```
+
+**Principle**: Every className from React must be in WordPress. No exceptions.
+
+## React to WordPress Style Migration Guidelines
+
+When migrating ANY React component to WordPress/PHP:
+
+### 1. Style Extraction Checklist
+- [ ] Extract ALL Tailwind classes from React JSX className attributes
+- [ ] Copy custom CSS classes exactly as defined
+- [ ] Preserve hover states, transitions, and animations
+- [ ] Match padding, margins, and spacing precisely
+- [ ] Include all responsive breakpoints (sm:, md:, lg:)
+
+### 2. Component Style Comparison
+Before marking any component migration complete:
+1. Open React component and PHP template side-by-side
+2. Compare EVERY className attribute line-by-line
+3. Verify borders, shadows, and background colors match
+4. Check button gradients and hover effects
+5. Ensure text colors use theme variables (text-primary-foreground, not text-white)
+
+### 3. CSS Build Process
+After ANY style changes:
+1. Always run `npm run build:css` in theme directory
+2. Verify new utility classes are generated
+3. Sync to Local WP before testing
+
+### 4. Common Style Elements to Verify
+- **Cards**: border, shadow, rounded corners, padding
+- **Buttons**: gradients, hover effects, text color, transitions
+- **Grids**: gap spacing, responsive columns
+- **Typography**: font sizes, weights, colors
+- **Animations**: stagger effects, transitions, transforms
+
+### 5. Testing Visual Parity
+Compare WordPress and React versions by:
+- Taking screenshots of both versions
+- Checking hover states and interactions
+- Verifying responsive behavior at all breakpoints
+- Ensuring consistent spacing and alignment
+
+⚠️ **IMPORTANT**: Never mark a React-to-WordPress migration task complete without verifying 100% visual parity!
 
 ## Common Patterns in This Codebase
 
@@ -431,6 +495,32 @@ Don't guess! Clarification questions are always better than wrong implementation
 > 🎯 **Focus on the task** - Don't add extra features
 >
 > ✅ **Verify completion** - Check all acceptance criteria
+
+---
+
+## Local Sync Instructions
+
+After making changes to the WordPress theme files, rebuild Tailwind CSS and sync to the Local WP installation:
+
+```bash
+# 1. Navigate to the WordPress theme directory
+cd /Users/lucianasilvaoliveira/Downloads/safequote/wp-content/themes/safequote-traditional
+
+# 2. Rebuild Tailwind CSS to include any new utility classes
+npm run build:css
+
+# 3. Sync theme files from development to Local WP site
+rsync -avz --delete \
+  /Users/lucianasilvaoliveira/Downloads/safequote/wp-content/themes/safequote-traditional/ \
+  "/Users/lucianasilvaoliveira/Local Sites/safequote/app/public/wp-content/themes/safequote-traditional/"
+```
+
+**Important:** Always run `npm run build:css` before syncing! Tailwind CSS uses JIT compilation and only generates CSS for classes it finds in your PHP templates. New or changed classes won't work until the CSS is rebuilt.
+
+**Quick one-liner for both operations:**
+```bash
+cd /Users/lucianasilvaoliveira/Downloads/safequote/wp-content/themes/safequote-traditional && npm run build:css && rsync -avz --delete ./ "/Users/lucianasilvaoliveira/Local Sites/safequote/app/public/wp-content/themes/safequote-traditional/"
+```
 
 ---
 

@@ -74,9 +74,9 @@ get_header();
                     <!-- Get Insurance Quotes Button -->
                     <div class="w-full transform hover:scale-105 transition-transform">
                         <button id="flow-get-insurance" class="w-full h-full p-6 text-lg border-2 border-primary text-primary hover:bg-primary/10 hover:text-primary/90 flex flex-col gap-2 shadow-lg rounded-lg transition-all">
-                            <!-- Shield Check Icon -->
+                            <!-- Shield Icon -->
                             <svg class="w-8 h-8 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
                             </svg>
                             <span><?php esc_html_e('Get Insurance Quotes', 'safequote-traditional'); ?></span>
                             <span class="text-sm font-normal text-primary/80"><?php esc_html_e('For a car you own', 'safequote-traditional'); ?></span>
@@ -103,7 +103,7 @@ get_header();
             <div class="container mx-auto px-4">
                 <div class="text-center mb-10">
                     <svg class="w-12 h-12 mx-auto text-primary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
                     </svg>
                     <h2 class="text-3xl md:text-4xl font-bold mb-3 text-gray-900">
                         <?php esc_html_e('Check Vehicle Safety Ratings', 'safequote-traditional'); ?>
@@ -157,7 +157,7 @@ get_header();
                 <div id="vehicles">
                     <?php
                     // Include Top Safety Picks template part
-                    set_query_var('vehicles', array()); // Will be populated with JavaScript
+                    set_query_var('vehicles', safequote_get_top_safety_picks(4)); // Get top 4 safety-rated vehicles
                     get_template_part('template-parts/top-safety-picks');
                     ?>
                 </div>
@@ -175,7 +175,7 @@ get_header();
 
                 <?php
                 // Include Vehicle Grid template part
-                set_query_var('vehicles', array());
+                set_query_var('vehicles', safequote_get_vehicles()); // Get all vehicles
                 get_template_part('template-parts/vehicle-grid');
                 ?>
 
@@ -184,6 +184,7 @@ get_header();
                     <?php
                     set_query_var('quotes', array());
                     set_query_var('vehicle', array('make' => 'your', 'model' => 'car'));
+                    set_query_var('section_id', 'vehicle-insurance-comparison');
                     get_template_part('template-parts/insurance-comparison');
                     ?>
                 </div>
@@ -194,7 +195,8 @@ get_header();
                 <?php
                 // Include Insurance Comparison template part
                 set_query_var('quotes', array());
-                set_query_var('vehicle', array('make' => 'your', 'model' => 'car'));
+                set_query_var('vehicle', array('year' => date('Y'), 'make' => 'your', 'model' => 'car'));
+                set_query_var('section_id', 'standalone-insurance-comparison');
                 get_template_part('template-parts/insurance-comparison');
                 ?>
             </div>
@@ -232,6 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedVehicle = null;
 
     function setFlow(flowName) {
+        console.log('Setting flow:', flowName);
         currentFlow = flowName;
 
         // Hide features and safety ratings, show flow content
@@ -252,9 +255,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('vehicles')?.scrollIntoView({ behavior: 'smooth' });
             }, 100);
         } else if (flowName === 'getInsurance') {
+            console.log('Insurance section found:', insuranceSection);
+            console.log('Insurance section classes before:', insuranceSection.className);
             insuranceSection.classList.remove('hidden');
+            console.log('Insurance section classes after:', insuranceSection.className);
             setTimeout(() => {
-                document.getElementById('insurance-comparison')?.scrollIntoView({ behavior: 'smooth' });
+                const scrollTarget = document.getElementById('standalone-insurance-comparison');
+                console.log('Scroll target found:', scrollTarget);
+                scrollTarget?.scrollIntoView({ behavior: 'smooth' });
             }, 100);
         } else if (flowName === 'driversEd') {
             driversEdSection.classList.remove('hidden');

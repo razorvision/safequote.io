@@ -11,11 +11,17 @@
  * @param array $vehicle Vehicle information for context
  */
 
-$vehicle = isset( $vehicle ) ? $vehicle : array(
+// Retrieve query vars set by front-page.php
+$vehicle = get_query_var( 'vehicle', array(
 	'year'  => '',
 	'make'  => 'your',
 	'model' => 'car',
-);
+) );
+
+$quotes = get_query_var( 'quotes', array() );
+
+// Get unique section ID to avoid duplicate IDs when template is used multiple times
+$section_id = get_query_var( 'section_id', 'insurance-comparison' );
 
 // Generate sample quotes if not provided
 if ( empty( $quotes ) ) {
@@ -25,12 +31,12 @@ if ( empty( $quotes ) ) {
 $is_generic = 'your' === $vehicle['make'] && 'car' === $vehicle['model'];
 ?>
 
-<div id="insurance-comparison" class="bg-gradient-to-br from-primary/10 to-secondary/30 rounded-2xl p-8 border border-primary/20 fade-in">
+<div id="<?php echo esc_attr( $section_id ); ?>" class="bg-gradient-to-br from-primary/10 to-secondary/30 rounded-2xl p-8 border border-primary/20 fade-in">
 	<!-- Header -->
 	<div class="flex items-center gap-3 mb-6">
 		<div class="bg-primary p-2 rounded-lg">
 			<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+				<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
 			</svg>
 		</div>
 		<div>
@@ -74,8 +80,8 @@ $is_generic = 'your' === $vehicle['make'] && 'car' === $vehicle['model'];
 			<div class="stagger-item bg-white rounded-xl p-6 shadow-md border-2 <?php echo $quote['recommended'] ? 'border-primary' : 'border-gray-200'; ?> relative flex flex-col" style="animation-delay: <?php echo esc_attr( $index * 0.1 ); ?>s;">
 				<!-- Recommended Badge -->
 				<?php if ( $quote['recommended'] ) : ?>
-					<div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
-						<span class="inline-block px-3 py-1 bg-primary text-white rounded-full text-xs font-semibold">
+					<div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+						<span class="inline-block px-2.5 py-0.5 bg-primary text-white border border-white/20 rounded-full text-xs font-semibold">
 							<?php esc_html_e( 'Recommended', 'safequote-traditional' ); ?>
 						</span>
 					</div>

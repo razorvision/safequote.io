@@ -17,6 +17,7 @@
     /* Vehicle Cards - Matching React */
     .vehicle-card {
         @apply bg-white rounded-xl shadow-md overflow-hidden;
+        @apply border border-gray-100;
         @apply transition-all duration-300;
         @apply hover:shadow-xl hover:-translate-y-1;
     }
@@ -31,7 +32,7 @@
     }
 
     .vehicle-card-body {
-        @apply p-6 space-y-4;
+        @apply p-5 space-y-4;
     }
 
     .vehicle-card-title {
@@ -44,7 +45,8 @@
 
     .vehicle-card-button {
         @apply w-full bg-gradient-to-r from-primary to-teal-500;
-        @apply text-white py-3 rounded-xl font-semibold;
+        @apply hover:from-primary/90 hover:to-teal-500/90;
+        @apply text-primary-foreground py-3 rounded-xl font-semibold;
         @apply transition-all duration-300;
         @apply hover:shadow-lg hover:scale-[1.02];
     }
