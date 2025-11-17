@@ -1,0 +1,24 @@
+{
+  "description": "SafeQuote WordPress Development Configuration",
+  "instructions": {
+    "primary": ".claude/instructions.md",
+    "required_reading": [
+      ".claude/instructions.md",
+      ".claude/premises.md",
+      ".claude/requirements.md"
+    ],
+    "critical_reminders": [
+      "ALWAYS sync to Local WP after changes using the command in instructions.md lines 501-523",
+      "ALWAYS run npm run build:css before syncing",
+      "ALWAYS read instructions.md at the start of every session"
+    ]
+  },
+  "project": {
+    "type": "WordPress Theme Development",
+    "theme_path": "wp-content/themes/safequote-traditional",
+    "local_wp_path": "/Users/lucianasilvaoliveira/Local Sites/safequote/app/public/wp-content/themes/safequote-traditional/"
+  },
+  "commands": {
+    "sync": "cd /Users/lucianasilvaoliveira/Downloads/safequote/wp-content/themes/safequote-traditional && npm run build:css && rsync -avz --delete ./ \"/Users/lucianasilvaoliveira/Local Sites/safequote/app/public/wp-content/themes/safequote-traditional/\""
+  }
+}

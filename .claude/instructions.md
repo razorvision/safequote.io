@@ -1,6 +1,16 @@
-# General Instructions for Claude & Agents
+# 🔴 MANDATORY: General Instructions for Claude & Agents
+
+**⚠️ IMPORTANT: This file MUST be read at the start of EVERY new context window or conversation.**
 
 Instructions for all Claude interactions and AI agents working on SafeQuote.
+
+## 📋 Required Reading Checklist
+
+Before starting ANY task, confirm you have:
+- [ ] Read this entire instructions.md file
+- [ ] Checked for any updates to the sync commands (lines 501-523)
+- [ ] Reviewed the style migration guidelines (lines 227-266)
+- [ ] Understood the Local WP sync process
 
 ## Before Starting Any Task
 
@@ -524,5 +534,26 @@ cd /Users/lucianasilvaoliveira/Downloads/safequote/wp-content/themes/safequote-t
 
 ---
 
+## 🚀 QUICK REFERENCE CARD - Essential Commands
+
+### Every Time You Make WordPress Theme Changes:
+```bash
+# The ONE command you need after ANY theme file changes:
+cd /Users/lucianasilvaoliveira/Downloads/safequote/wp-content/themes/safequote-traditional && npm run build:css && rsync -avz --delete ./ "/Users/lucianasilvaoliveira/Local Sites/safequote/app/public/wp-content/themes/safequote-traditional/"
+```
+
+### Key Paths:
+- **Dev Theme**: `/Users/lucianasilvaoliveira/Downloads/safequote/wp-content/themes/safequote-traditional/`
+- **Local WP Theme**: `/Users/lucianasilvaoliveira/Local Sites/safequote/app/public/wp-content/themes/safequote-traditional/`
+
+### Critical Rules:
+1. ✅ ALWAYS run `npm run build:css` BEFORE syncing
+2. ✅ ALWAYS sync to Local WP after changes
+3. ✅ ALWAYS read this instructions.md file first
+4. ✅ ALWAYS check GitHub issue requirements completely
+
+---
+
 **Last Updated**: November 2024
-**Version**: 1.0
+**Version**: 1.1
+**Priority**: MANDATORY READING

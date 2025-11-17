@@ -14,9 +14,9 @@ get_header();
         <!-- Background Image and Gradients -->
         <div class="absolute inset-0">
             <img
-                alt="Parent handing car keys to a happy teenager"
+                alt="Mother and son examining a car together"
                 class="w-full h-full object-cover"
-                src="https://images.unsplash.com/photo-1674559884947-a778697b6101" />
+                src="<?php echo SAFEQUOTE_THEME_URI; ?>/assets/images/hero-parent-teen-car.jpg" />
             <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
             <div class="absolute inset-0 bg-gradient-to-r from-primary/30 to-transparent"></div>
         </div>
