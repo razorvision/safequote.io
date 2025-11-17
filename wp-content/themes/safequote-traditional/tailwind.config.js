@@ -4,6 +4,8 @@ module.exports = {
   content: [
     './**/*.php',
     './assets/js/**/*.js',
+    './assets/css/**/*.css',
+    './src/css/**/*.css',
     // Exclude node_modules and vendor directories
     '!./node_modules/**',
     '!./vendor/**',

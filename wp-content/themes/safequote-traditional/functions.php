@@ -323,7 +323,8 @@ add_filter('excerpt_more', 'safequote_excerpt_more');
 /**
  * Get sample insurance quotes for display
  *
- * Returns sample insurance provider quotes (matches React insuranceData.js)
+ * Returns sample insurance provider quotes (mirrors React insuranceData.js logic)
+ * Now aligned with vehicle-data.php structure using snake_case keys
  */
 function safequote_get_sample_insurance_quotes($vehicle = array()) {
     // Default vehicle if not provided
@@ -331,26 +332,26 @@ function safequote_get_sample_insurance_quotes($vehicle = array()) {
         $vehicle = array(
             'make' => 'your',
             'model' => 'car',
-            'year' => 2024,
-            'condition' => 'used',
-            'safetyRating' => 4
+            'year' => date('Y'),
+            'condition' => 'New',
+            'safety_rating' => 4
         );
     }
 
     // Base monthly price calculation
     $base_price = 150; // Base price
 
-    // Adjust for condition
+    // Adjust for condition (matches vehicle-data.php structure)
     if (isset($vehicle['condition'])) {
-        if ('new' === $vehicle['condition']) {
+        if ('New' === $vehicle['condition']) {
             $base_price = 165;
-        } elseif ('preowned' === $vehicle['condition']) {
+        } elseif ('Preowned' === $vehicle['condition']) {
             $base_price = 155;
         }
     }
 
-    // Adjust for safety rating
-    if (isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5) {
+    // Adjust for safety rating (matches vehicle-data.php structure)
+    if (isset($vehicle['safety_rating']) && $vehicle['safety_rating'] >= 5) {
         $base_price -= 20; // Teen driver discount
     }
 
@@ -360,44 +361,42 @@ function safequote_get_sample_insurance_quotes($vehicle = array()) {
             'url'          => 'https://www.progressive.com/',
             'monthlyPrice' => $base_price - 2,
             'rating'       => 4.8,
-            'discount'     => isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5 ? 15 : 0,
+            'discount'     => isset($vehicle['safety_rating']) && $vehicle['safety_rating'] >= 5 ? 15 : 0,
             'recommended'  => true,
             'coverage'     => array(
-                'Liability Coverage up to $100k',
+                'Liability Coverage',
                 'Collision Coverage',
                 'Comprehensive Coverage',
-                '24/7 Roadside Assistance',
-                'Teen Driver Discount'
+                'Teen Driver Discount',
+                '24/7 Roadside Assistance'
             ),
         ),
         array(
-            'provider'     => 'SecureRide Auto',
-            'url'          => 'https://www.statefarm.com/',
+            'provider'     => 'DriveSecure',
+            'url'          => 'https://www.geico.com/',
             'monthlyPrice' => $base_price + 5,
             'rating'       => 4.6,
-            'discount'     => isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5 ? 10 : 0,
+            'discount'     => isset($vehicle['safety_rating']) && $vehicle['safety_rating'] >= 5 ? 10 : 0,
             'recommended'  => false,
             'coverage'     => array(
-                'Liability Coverage up to $100k',
-                'Collision Coverage',
-                'Uninsured Motorist Protection',
-                'Online Account Management',
-                'Teen Driver Monitoring'
+                'Full Coverage',
+                'Accident Forgiveness',
+                'New Driver Support',
+                'Mobile App Tracking'
             ),
         ),
         array(
-            'provider'     => 'DriveGuard Protection',
-            'url'          => 'https://www.allstate.com/',
+            'provider'     => 'YouthShield Auto',
+            'url'          => 'https://www.statefarm.com/',
             'monthlyPrice' => $base_price + 12,
             'rating'       => 4.5,
-            'discount'     => isset($vehicle['safetyRating']) && $vehicle['safetyRating'] >= 5 ? 12 : 0,
+            'discount'     => isset($vehicle['safety_rating']) && $vehicle['safety_rating'] >= 5 ? 12 : 0,
             'recommended'  => false,
             'coverage'     => array(
-                'Liability Coverage up to $100k',
-                'Collision and Comprehensive',
-                'Medical Payments Coverage',
-                'Accident Forgiveness',
-                'Young Driver Safety Course Discount'
+                'Liability & Collision',
+                'Teen Safety Program',
+                'Defensive Driving Discount',
+                'Parent Portal Access'
             ),
         ),
     );
@@ -432,3 +431,13 @@ require_once SAFEQUOTE_THEME_DIR . '/inc/taxonomies.php';
  * Load AJAX handlers
  */
 require_once SAFEQUOTE_THEME_DIR . '/inc/ajax-handlers.php';
+
+/**
+ * Load vehicle data and functions
+ */
+require_once SAFEQUOTE_THEME_DIR . '/inc/vehicle-data.php';
+
+/**
+ * Load insurance data and functions
+ */
+require_once SAFEQUOTE_THEME_DIR . '/inc/insurance-data.php';
