@@ -4,7 +4,6 @@
     "primary": ".claude/instructions.md",
     "required_reading": [
       ".claude/instructions.md",
-      ".claude/premises.md",
       ".claude/requirements.md"
     ],
     "critical_reminders": [

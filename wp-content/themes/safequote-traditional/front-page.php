@@ -19,14 +19,14 @@ get_header();
         <?php get_template_part('template-parts/safety-ratings'); ?>
 
         <!-- Flow Content Container (for dynamic content) -->
-        <div id="flow-content" class="hidden space-y-12">
+        <div id="flow-content" class="hidden space-y-12" aria-live="polite" aria-label="<?php esc_attr_e('Main content area', 'safequote-traditional'); ?>">
             <!-- Dynamic content will be loaded here based on flow selection -->
             <button id="start-over" class="text-primary hover:underline font-semibold">
                 &larr; <?php esc_html_e('Start Over', 'safequote-traditional'); ?>
             </button>
 
             <!-- Vehicle Search Section (shown in findCar flow) -->
-            <div id="vehicles-section" class="hidden space-y-8">
+            <div id="vehicles-section" class="hidden space-y-8" aria-live="assertive" aria-label="<?php esc_attr_e('Vehicle search results', 'safequote-traditional'); ?>">
                 <div id="vehicles">
                     <?php
                     // Include Top Safety Picks template part
@@ -53,7 +53,7 @@ get_header();
                 ?>
 
                 <!-- Insurance Comparison (shown when vehicle is selected in findCar flow) -->
-                <div id="vehicle-insurance-section" class="hidden">
+                <div id="vehicle-insurance-section" class="hidden" aria-live="assertive" aria-label="<?php esc_attr_e('Insurance quotes for selected vehicle', 'safequote-traditional'); ?>">
                     <?php
                     set_query_var('quotes', array());
                     set_query_var('vehicle', array('make' => 'your', 'model' => 'car'));
@@ -64,7 +64,7 @@ get_header();
             </div>
 
             <!-- Insurance Section (shown in getInsurance flow) -->
-            <div id="insurance-section" class="hidden space-y-8">
+            <div id="insurance-section" class="hidden space-y-8" aria-live="assertive" aria-label="<?php esc_attr_e('Insurance comparison results', 'safequote-traditional'); ?>">
                 <?php
                 // Include Insurance Comparison template part
                 set_query_var('quotes', array());
@@ -75,7 +75,7 @@ get_header();
             </div>
 
             <!-- Driver's Ed Section (shown in driversEd flow) -->
-            <div id="drivers-ed-section" class="hidden space-y-8">
+            <div id="drivers-ed-section" class="hidden space-y-8" aria-live="polite" aria-label="<?php esc_attr_e('Driver education resources', 'safequote-traditional'); ?>">
                 <?php get_template_part('template-parts/drivers-ed'); ?>
             </div>
         </div>

@@ -7,9 +7,8 @@
 ### ✅ Required Reading (In Order):
 
 1. [ ] Read `.claude/instructions.md` (MANDATORY - contains sync commands)
-2. [ ] Read `.claude/premises.md` (project context)
-3. [ ] Read `.claude/requirements.md` (coding standards)
-4. [ ] Check the GitHub issue you're working on
+2. [ ] Read `.claude/requirements.md` (coding standards)
+3. [ ] Check the GitHub issue you're working on
 
 ### ✅ Critical Commands to Remember:
 
@@ -24,6 +23,26 @@ cd /Users/lucianasilvaoliveira/Downloads/safequote/wp-content/themes/safequote-t
 - **ALWAYS** sync to Local WP after making changes
 - **ALWAYS** verify visual parity when migrating React to WordPress
 - **NEVER** skip the style migration checklist (instructions.md lines 227-266)
+
+### ✅ Git Workflow (🚨 CRITICAL - NEVER COMMIT TO MAIN):
+
+**BEFORE making ANY commit, follow this workflow:**
+
+1. [ ] Create feature branch: `git checkout -b feature/issue-XX-description`
+2. [ ] Make your code changes
+3. [ ] Commit to feature branch (NOT main): `git add -A && git commit -m "..."`
+4. [ ] Push feature branch: `git push origin feature/issue-XX-description`
+5. [ ] Create Pull Request on GitHub
+6. [ ] Reference issue in PR: "Closes #XX"
+
+**Branch naming convention:**
+- `feature/issue-18-javascript-interactivity`
+- `fix/issue-25-modal-accessibility`
+- `docs/update-readme`
+
+🚨 **RULE #1: NEVER commit directly to `main` branch**
+🚨 **RULE #2: ALWAYS create a PR, even for small changes**
+🚨 **RULE #3: ALWAYS reference the GitHub issue in your PR**
 
 ### ✅ Project Paths:
 
