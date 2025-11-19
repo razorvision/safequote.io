@@ -25,15 +25,40 @@ From the issue, identify:
 
 ## Step 2.5: Move Issue to "In progress" on Kanban Board
 
-Update the project board status:
+Update the project board status using GraphQL API (GitHub Projects V2):
 ```bash
 ITEM_ID=$(gh issue view {{args}} --repo razorvision/safequote.io --json projectItems -q '.projectItems[0].id' 2>/dev/null)
 if [ ! -z "$ITEM_ID" ]; then
-  gh project item-edit --id "$ITEM_ID" --field Status --value "In progress" 2>/dev/null && echo "✅ Moved issue #{{args}} to 'In progress'"
+  gh api graphql -f query='
+  mutation {
+    updateProjectV2ItemFieldValue(
+      input: {
+        projectId: "PVT_kwDOALZa3M4BH9O0"
+        itemId: "'$ITEM_ID'"
+        fieldId: "PVTSSF_lADOALZa3M4BH9O0zg4jye8"
+        value: { singleSelectOptionId: "47fc9ee4" }
+      }
+    ) {
+      projectV2Item {
+        status: fieldValueByName(name: "Status") {
+          ... on ProjectV2ItemFieldSingleSelectValue {
+            name
+          }
+        }
+      }
+    }
+  }' && echo "✅ Moved issue #{{args}} to 'In progress'"
+else
+  echo "⚠️  Could not find project item for issue #{{args}}"
 fi
 ```
 
 This ensures the Kanban board reflects that you're actively working on this issue.
+
+**Reference IDs for SafeQuote.io Project:**
+- Project ID: `PVT_kwDOALZa3M4BH9O0`
+- Status Field ID: `PVTSSF_lADOALZa3M4BH9O0zg4jye8`
+- Status Options: Backlog (`f75ad846`), Ready (`61e4505c`), In progress (`47fc9ee4`), In review (`df73e18b`), Done (`98236657`)
 
 ## Step 3: Create Feature Branch
 
@@ -133,13 +158,31 @@ gh issue close {{args}} --repo razorvision/safequote.io
 
 ### 8.2: Move Issue to "Done" on Kanban Board
 
-**IMPORTANT**: GitHub does NOT automatically move issues to "Done" when PRs merge. You must do this manually:
+**IMPORTANT**: GitHub does NOT automatically move issues to "Done" when PRs merge. You must do this manually using GraphQL API:
 
 ```bash
 # Get the project item ID and move to Done
 ITEM_ID=$(gh issue view {{args}} --repo razorvision/safequote.io --json projectItems -q '.projectItems[0].id' 2>/dev/null)
 if [ ! -z "$ITEM_ID" ]; then
-  gh project item-edit --id "$ITEM_ID" --field Status --value "Done" 2>/dev/null && echo "✅ Moved issue #{{args}} to 'Done' ✓"
+  gh api graphql -f query='
+  mutation {
+    updateProjectV2ItemFieldValue(
+      input: {
+        projectId: "PVT_kwDOALZa3M4BH9O0"
+        itemId: "'$ITEM_ID'"
+        fieldId: "PVTSSF_lADOALZa3M4BH9O0zg4jye8"
+        value: { singleSelectOptionId: "98236657" }
+      }
+    ) {
+      projectV2Item {
+        status: fieldValueByName(name: "Status") {
+          ... on ProjectV2ItemFieldSingleSelectValue {
+            name
+          }
+        }
+      }
+    }
+  }' && echo "✅ Moved issue #{{args}} to 'Done' ✓"
 else
   echo "⚠️  Issue not linked to project board - move manually:"
   echo "   1. Go to https://github.com/razorvision/safequote.io/projects"
@@ -147,6 +190,8 @@ else
   echo "   3. Drag it to the 'Done' column"
 fi
 ```
+
+**Note:** The option ID for "Done" status is `98236657`. See Step 2.5 for full reference IDs.
 
 ### 8.3: Switch to Main & Pull Latest
 
