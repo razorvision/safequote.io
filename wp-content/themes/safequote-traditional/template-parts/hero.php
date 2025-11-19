@@ -13,6 +13,7 @@
         <img
             alt="Mother and son examining a car together"
             class="w-full h-full object-cover"
+            style="object-position: center 10%;"
             src="<?php echo SAFEQUOTE_THEME_URI; ?>/assets/images/hero-parent-teen-car.jpg" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-primary/30 to-transparent"></div>
