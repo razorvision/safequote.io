@@ -233,13 +233,15 @@ class SafeQuote_NHTSA_CSV_Import {
                     continue;
                 }
 
-                // Insert or update in database
+                // Insert or update in database with 'csv' source
+                // Smart merge: won't overwrite API data with empty CSV rating
                 $result = SafeQuote_NHTSA_Database::update_vehicle_cache(
                     $data['year'],
                     $data['make'],
                     $data['model'],
                     $data['nhtsa_data'],
-                    7 * 24 // 7 days expiry
+                    7 * 24, // 7 days expiry
+                    'csv' // Mark as CSV source
                 );
 
                 if ($result) {
@@ -287,19 +289,36 @@ class SafeQuote_NHTSA_CSV_Import {
         $map = array();
 
         foreach ($headers_lower as $index => $header) {
-            if (stripos($header, 'year') !== false || stripos($header, 'model year') !== false) {
+            // Year: MODEL_YR, year, model year
+            if (stripos($header, 'model_yr') !== false || stripos($header, 'year') !== false || stripos($header, 'model year') !== false) {
                 $map['year'] = $index;
-            } elseif (stripos($header, 'make') !== false && stripos($header, 'model') === false) {
+            }
+            // Make: MAKE (but not part of model)
+            elseif (stripos($header, 'make') !== false && stripos($header, 'model') === false) {
                 $map['make'] = $index;
-            } elseif (stripos($header, 'model') !== false && stripos($header, 'year') === false) {
+            }
+            // Model: MODEL (but not BODY_STYLE)
+            elseif (stripos($header, 'model') !== false && stripos($header, 'year') === false && stripos($header, 'body') === false) {
                 $map['model'] = $index;
-            } elseif (stripos($header, 'overall') !== false && stripos($header, 'rating') !== false) {
+            }
+            // Overall rating: OVERALL_STARS or overall rating
+            elseif ((stripos($header, 'overall') !== false && stripos($header, 'stars') !== false) ||
+                    (stripos($header, 'overall') !== false && stripos($header, 'rating') !== false)) {
                 $map['overall_rating'] = $index;
-            } elseif (stripos($header, 'front') !== false && stripos($header, 'crash') !== false) {
+            }
+            // Front crash: FRNT_DRIV_STARS or front crash
+            elseif ((stripos($header, 'frnt') !== false && stripos($header, 'star') !== false) ||
+                    (stripos($header, 'front') !== false && stripos($header, 'crash') !== false)) {
                 $map['front_crash'] = $index;
-            } elseif (stripos($header, 'side') !== false && stripos($header, 'crash') !== false) {
+            }
+            // Side crash: SIDE_DRIV_STARS or side crash
+            elseif ((stripos($header, 'side') !== false && stripos($header, 'star') !== false && stripos($header, 'barrier') === false) ||
+                    (stripos($header, 'side') !== false && stripos($header, 'crash') !== false)) {
                 $map['side_crash'] = $index;
-            } elseif (stripos($header, 'rollover') !== false && stripos($header, 'crash') !== false) {
+            }
+            // Rollover: ROLLOVER_STARS or rollover crash
+            elseif ((stripos($header, 'rollover') !== false && stripos($header, 'star') !== false) ||
+                    (stripos($header, 'rollover') !== false && stripos($header, 'crash') !== false)) {
                 $map['rollover_crash'] = $index;
             }
         }
@@ -309,16 +328,20 @@ class SafeQuote_NHTSA_CSV_Import {
 
         foreach ($required as $field) {
             if (!isset($map[$field])) {
-                error_log("[NHTSA CSV] Missing required column: $field");
+                error_log("[NHTSA CSV] Missing required column: $field. Headers found: " . implode(', ', $headers_lower));
                 return false;
             }
         }
+
+        error_log('[NHTSA CSV] Column mapping successful: ' . json_encode($map));
 
         return $map;
     }
 
     /**
      * Parse single CSV row into database format
+     *
+     * Accepts vehicles even without ratings - API will fill gaps later.
      *
      * @param array $row        CSV row data.
      * @param array $column_map Column mapping.
@@ -329,19 +352,27 @@ class SafeQuote_NHTSA_CSV_Import {
         $year = isset($row[$column_map['year']]) ? intval($row[$column_map['year']]) : null;
         $make = isset($row[$column_map['make']]) ? sanitize_text_field($row[$column_map['make']]) : null;
         $model = isset($row[$column_map['model']]) ? sanitize_text_field($row[$column_map['model']]) : null;
-        $overall_rating = isset($row[$column_map['overall_rating']]) ? floatval($row[$column_map['overall_rating']]) : null;
 
-        // Validate required fields
-        if (!$year || !$make || !$model || !$overall_rating) {
+        // Validate vehicle identity - year, make, model are required
+        if (!$year || !$make || !$model) {
             return false;
         }
 
-        // Build NHTSA data object
+        // Parse rating - only numeric 1-5 is valid, skip invalid values like "Standard", "Optional", empty
+        $rating_value = isset($row[$column_map['overall_rating']]) ? trim($row[$column_map['overall_rating']]) : '';
+        $overall_rating = null;
+
+        // Only accept numeric ratings 1-5
+        if ($rating_value && preg_match('/^[1-5](?:\.\d+)?$/', $rating_value)) {
+            $overall_rating = floatval($rating_value);
+        }
+
+        // Build NHTSA data object (rating can be null - API will fill)
         $nhtsa_data = array(
             'overall_rating' => $overall_rating,
-            'front_crash' => isset($row[$column_map['front_crash']]) ? floatval($row[$column_map['front_crash']]) : null,
-            'side_crash' => isset($row[$column_map['side_crash']]) ? floatval($row[$column_map['side_crash']]) : null,
-            'rollover_crash' => isset($row[$column_map['rollover_crash']]) ? floatval($row[$column_map['rollover_crash']]) : null,
+            'front_crash' => isset($row[$column_map['front_crash']]) && preg_match('/^[1-5](?:\.\d+)?$/', trim($row[$column_map['front_crash']])) ? floatval($row[$column_map['front_crash']]) : null,
+            'side_crash' => isset($row[$column_map['side_crash']]) && preg_match('/^[1-5](?:\.\d+)?$/', trim($row[$column_map['side_crash']])) ? floatval($row[$column_map['side_crash']]) : null,
+            'rollover_crash' => isset($row[$column_map['rollover_crash']]) && preg_match('/^[1-5](?:\.\d+)?$/', trim($row[$column_map['rollover_crash']])) ? floatval($row[$column_map['rollover_crash']]) : null,
             'source' => 'csv_import',
         );
 

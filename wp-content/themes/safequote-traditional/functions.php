@@ -28,6 +28,13 @@ require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-cache.php';
 require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-csv-import.php';
 require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-validate.php';
 require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-init.php';
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-admin-page.php';
+
+/**
+ * Initialize NHTSA Admin Page
+ */
+add_action('admin_menu', array('SafeQuote_NHTSA_Admin_Page', 'register_menu'));
+add_action('admin_init', array('SafeQuote_NHTSA_Admin_Page', 'handle_form_submission'));
 
 /**
  * Theme setup

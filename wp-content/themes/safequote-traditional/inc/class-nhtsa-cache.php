@@ -28,9 +28,10 @@ class SafeQuote_NHTSA_Cache {
      *
      * Attempts retrieval in this order:
      * 1. Transient cache (24 hours)
-     * 2. Database cache (7 days)
-     * 3. Live API call (with rate limiting)
-     * 4. Stale cache fallback
+     * 2. Database cache with valid rating
+     * 3. API fallback for database records with null rating (fills CSV gaps)
+     * 4. Live API call for new vehicles
+     * 5. Stale cache fallback
      *
      * @param int    $year  Vehicle model year.
      * @param string $make  Vehicle make/manufacturer.
@@ -57,22 +58,58 @@ class SafeQuote_NHTSA_Cache {
         if ($db_cache) {
             $data = json_decode($db_cache->nhtsa_data, true);
 
-            // Repopulate transient for faster next request
-            set_transient($cache_key, $data, self::CACHE_TTL_TRANSIENT);
+            // If we have a valid rating from CSV or API, use it
+            if (isset($data['overall_rating']) && $data['overall_rating'] !== null) {
+                // Repopulate transient for faster next request
+                set_transient($cache_key, $data, self::CACHE_TTL_TRANSIENT);
+                error_log("[NHTSA] ✓ Database HIT: {$year} {$make} {$model}");
+                return $data;
+            }
 
-            error_log("[NHTSA] ✓ Database HIT: {$year} {$make} {$model}");
+            // Database has vehicle but rating is null (from CSV import)
+            // Try API to fill the gap
+            error_log("[NHTSA] → Database has record but no rating, trying API: {$year} {$make} {$model}");
+
+            $api_data = self::fetch_from_api($year, $make, $model);
+
+            if ($api_data && isset($api_data['overall_rating']) && $api_data['overall_rating'] !== null) {
+                // Store API result permanently with 'api' source flag
+                SafeQuote_NHTSA_Database::update_vehicle_cache(
+                    $year,
+                    $make,
+                    $model,
+                    $api_data,
+                    30 * 24, // 30 days expiry
+                    'api' // Mark as API source - won't be overwritten by CSV syncs
+                );
+
+                set_transient($cache_key, $api_data, self::CACHE_TTL_TRANSIENT);
+                error_log("[NHTSA] ✓ API filled gap: {$year} {$make} {$model}");
+                return $api_data;
+            }
+
+            // No API data available, return database record with null rating
+            set_transient($cache_key, $data, self::CACHE_TTL_TRANSIENT);
+            error_log("[NHTSA] ⚠ Database has vehicle but no rating available: {$year} {$make} {$model}");
             return $data;
         }
 
-        // L3: Fetch from live NHTSA API
+        // L3: Fetch from live NHTSA API (for new vehicles not in CSV)
         error_log("[NHTSA] → Fetching live: {$year} {$make} {$model}");
 
         $data = self::fetch_from_api($year, $make, $model);
 
         if ($data) {
-            // Cache the successful result
+            // Cache the successful result with 'api' source
             set_transient($cache_key, $data, self::CACHE_TTL_TRANSIENT);
-            SafeQuote_NHTSA_Database::update_vehicle_cache($year, $make, $model, $data);
+            SafeQuote_NHTSA_Database::update_vehicle_cache(
+                $year,
+                $make,
+                $model,
+                $data,
+                30 * 24, // 30 days
+                'api' // From API
+            );
 
             error_log("[NHTSA] ✓ API SUCCESS: {$year} {$make} {$model}");
             return $data;
@@ -149,19 +186,36 @@ class SafeQuote_NHTSA_Cache {
     /**
      * Parse NHTSA API response into consistent format
      *
+     * Handles API field names and converts "Not Rated" strings to null.
+     *
      * @param array $result NHTSA API result.
      * @return array Normalized rating data.
      */
     private static function parse_nhtsa_response($result) {
+        // Helper to convert rating strings to float, handle "Not Rated"
+        $get_rating = function($value) {
+            if ($value === 'Not Rated' || $value === '' || $value === null) {
+                return null;
+            }
+            if (is_numeric($value)) {
+                return floatval($value);
+            }
+            return null;
+        };
+
         $parsed = array(
             'vehicle_id' => isset($result['VehicleId']) ? intval($result['VehicleId']) : null,
-            'overall_rating' => isset($result['OverallRating']) ? floatval($result['OverallRating']) : null,
-            'front_crash' => isset($result['FrontCrash']) ? floatval($result['FrontCrash']) : null,
-            'side_crash' => isset($result['SideCrash']) ? floatval($result['SideCrash']) : null,
-            'rollover_crash' => isset($result['RolloverCrash']) ? floatval($result['RolloverCrash']) : null,
-            'overall_front_passenger' => isset($result['OverallFrontPassenger']) ? floatval($result['OverallFrontPassenger']) : null,
+            // Overall rating from OverallRating field
+            'overall_rating' => $get_rating(isset($result['OverallRating']) ? $result['OverallRating'] : null),
+            // Front crash from OverallFrontCrashRating field
+            'front_crash' => $get_rating(isset($result['OverallFrontCrashRating']) ? $result['OverallFrontCrashRating'] : null),
+            // Side crash from OverallSideCrashRating field
+            'side_crash' => $get_rating(isset($result['OverallSideCrashRating']) ? $result['OverallSideCrashRating'] : null),
+            // Rollover from RolloverRating field
+            'rollover_crash' => $get_rating(isset($result['RolloverRating']) ? $result['RolloverRating'] : null),
             'description' => isset($result['VehicleDescription']) ? sanitize_text_field($result['VehicleDescription']) : null,
             'year' => isset($result['ModelYear']) ? intval($result['ModelYear']) : null,
+            'source' => 'api',
         );
 
         return $parsed;

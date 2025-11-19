@@ -61,6 +61,7 @@ class SafeQuote_NHTSA_Database {
             side_crash DECIMAL(3,1),
             rollover_crash DECIMAL(3,1),
             nhtsa_data LONGTEXT NOT NULL,
+            rating_source ENUM('csv', 'api', 'manual') DEFAULT 'csv' NOT NULL,
             cached_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             expires_at DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -68,6 +69,7 @@ class SafeQuote_NHTSA_Database {
             KEY idx_year_make_model (year, make, model),
             KEY idx_vehicle_id (vehicle_id),
             KEY idx_expires (expires_at),
+            KEY idx_rating_source (rating_source),
             UNIQUE KEY unique_vehicle (year, make, model)
         ) $charset_collate;";
 
@@ -185,20 +187,30 @@ class SafeQuote_NHTSA_Database {
     }
 
     /**
-     * Insert or update vehicle cache
+     * Insert or update vehicle cache with smart merge logic
      *
-     * @param int    $year    Vehicle year.
-     * @param string $make    Vehicle make.
-     * @param string $model   Vehicle model.
-     * @param array  $nhtsa_data NHTSA API response data.
-     * @param int    $expires_in Hours until cache expires.
+     * @param int    $year         Vehicle year.
+     * @param string $make         Vehicle make.
+     * @param string $model        Vehicle model.
+     * @param array  $nhtsa_data   NHTSA API response data.
+     * @param int    $expires_in   Hours until cache expires.
+     * @param string $source       Data source: 'csv', 'api', 'manual'.
      * @return int|bool Row ID on success, false on failure.
      */
-    public static function update_vehicle_cache($year, $make, $model, $nhtsa_data, $expires_in = 168) {
+    public static function update_vehicle_cache($year, $make, $model, $nhtsa_data, $expires_in = 168, $source = 'csv') {
         global $wpdb;
 
         $table = $wpdb->prefix . 'nhtsa_vehicle_cache';
         $existing = self::get_vehicle_cache($year, $make, $model);
+
+        // Extract rating from nhtsa_data
+        $new_rating = isset($nhtsa_data['overall_rating']) ? floatval($nhtsa_data['overall_rating']) : null;
+
+        // Smart merge logic: Don't overwrite API data with CSV null/empty
+        if ($existing && $source === 'csv' && $new_rating === null && $existing->rating_source === 'api') {
+            error_log("[NHTSA DB] Skipping CSV update for $year $make $model - protecting API data");
+            return true; // Don't overwrite
+        }
 
         $expires_at = date('Y-m-d H:i:s', strtotime("+{$expires_in} hours"));
 
@@ -206,11 +218,12 @@ class SafeQuote_NHTSA_Database {
             'year' => $year,
             'make' => sanitize_text_field($make),
             'model' => sanitize_text_field($model),
-            'nhtsa_overall_rating' => isset($nhtsa_data['overall_rating']) ? floatval($nhtsa_data['overall_rating']) : null,
+            'nhtsa_overall_rating' => $new_rating,
             'front_crash' => isset($nhtsa_data['front_crash']) ? floatval($nhtsa_data['front_crash']) : null,
             'side_crash' => isset($nhtsa_data['side_crash']) ? floatval($nhtsa_data['side_crash']) : null,
             'rollover_crash' => isset($nhtsa_data['rollover_crash']) ? floatval($nhtsa_data['rollover_crash']) : null,
             'nhtsa_data' => json_encode($nhtsa_data),
+            'rating_source' => sanitize_text_field($source),
             'expires_at' => $expires_at,
             'updated_at' => current_time('mysql'),
         );
@@ -221,11 +234,11 @@ class SafeQuote_NHTSA_Database {
                 'year' => $year,
                 'make' => $make,
                 'model' => $model,
-            ), null, array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%s', '%s', '%s'));
+            ), null, array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%s'));
         } else {
             // Insert new
             $cache_data['created_at'] = current_time('mysql');
-            return $wpdb->insert($table, $cache_data, array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%s'));
+            return $wpdb->insert($table, $cache_data, array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s'));
         }
     }
 
