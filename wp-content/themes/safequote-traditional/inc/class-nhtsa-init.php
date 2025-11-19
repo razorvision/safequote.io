@@ -58,40 +58,31 @@ class SafeQuote_NHTSA_Init {
      * @return void
      */
     private static function schedule_crons() {
-        // Schedule discovery (daily at 2 AM)
-        if (!wp_next_scheduled('safequote_nhtsa_discover')) {
+        // Schedule CSV sync (daily at 2 AM)
+        // Checks if NHTSA CSV was updated and imports if needed
+        if (!wp_next_scheduled('safequote_nhtsa_csv_sync')) {
             wp_schedule_event(
                 strtotime('02:00:00'),
                 'daily',
-                'safequote_nhtsa_discover'
+                'safequote_nhtsa_csv_sync'
             );
-            error_log('[NHTSA Init] Scheduled discovery cron');
+            error_log('[NHTSA Init] Scheduled CSV sync cron');
         }
 
-        // Schedule fetch (daily at 3 AM)
-        if (!wp_next_scheduled('safequote_nhtsa_fetch')) {
-            wp_schedule_event(
-                strtotime('03:00:00'),
-                'daily',
-                'safequote_nhtsa_fetch'
-            );
-            error_log('[NHTSA Init] Scheduled fetch cron');
-        }
-
-        // Schedule validation (daily at 4 AM)
+        // Schedule validation (daily at 3 AM)
         if (!wp_next_scheduled('safequote_nhtsa_validate')) {
             wp_schedule_event(
-                strtotime('04:00:00'),
+                strtotime('03:00:00'),
                 'daily',
                 'safequote_nhtsa_validate'
             );
             error_log('[NHTSA Init] Scheduled validation cron');
         }
 
-        // Schedule cleanup (daily at 5 AM)
+        // Schedule cleanup (daily at 4 AM)
         if (!wp_next_scheduled('safequote_nhtsa_cleanup')) {
             wp_schedule_event(
-                strtotime('05:00:00'),
+                strtotime('04:00:00'),
                 'daily',
                 'safequote_nhtsa_cleanup'
             );
@@ -100,42 +91,18 @@ class SafeQuote_NHTSA_Init {
     }
 
     /**
-     * Discovery cron job
+     * CSV sync cron job
+     *
+     * Checks if NHTSA CSV file has been updated on their server.
+     * If updated, downloads and imports all vehicle safety ratings.
      *
      * @return void
      */
-    public static function cron_discover() {
-        require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-discover.php';
+    public static function cron_csv_sync() {
+        require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-csv-import.php';
 
-        $result = SafeQuote_NHTSA_Discover::discover_vehicles();
-        error_log('[NHTSA Cron] Discovery: ' . json_encode($result));
-    }
-
-    /**
-     * Fetch cron job
-     *
-     * Runs multiple times to process batch in smaller chunks
-     * to avoid timeout.
-     *
-     * @return void
-     */
-    public static function cron_fetch() {
-        require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-fetch.php';
-
-        // Run fetch job 5 times with small delay between runs
-        for ($i = 0; $i < 5; $i++) {
-            $result = SafeQuote_NHTSA_Fetch::fetch_pending_batch();
-
-            if ($result['processed'] === 0) {
-                // No more pending items
-                break;
-            }
-
-            // Small delay between batch runs
-            sleep(1);
-        }
-
-        error_log('[NHTSA Cron] Fetch complete');
+        $result = SafeQuote_NHTSA_CSV_Import::sync_csv_data();
+        error_log('[NHTSA Cron] CSV Sync: ' . json_encode($result));
     }
 
     /**
@@ -275,18 +242,20 @@ class SafeQuote_NHTSA_Init {
      */
     public static function cleanup() {
         // Unschedule all NHTSA crons
-        wp_clear_scheduled_hook('safequote_nhtsa_discover');
-        wp_clear_scheduled_hook('safequote_nhtsa_fetch');
+        wp_clear_scheduled_hook('safequote_nhtsa_csv_sync');
         wp_clear_scheduled_hook('safequote_nhtsa_validate');
         wp_clear_scheduled_hook('safequote_nhtsa_cleanup');
+
+        // Cleanup CSV import temporary files
+        require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-csv-import.php';
+        SafeQuote_NHTSA_CSV_Import::cleanup();
 
         error_log('[NHTSA Init] Cleanup complete - crons unscheduled');
     }
 }
 
 // Register cron job callbacks
-add_action('safequote_nhtsa_discover', array('SafeQuote_NHTSA_Init', 'cron_discover'));
-add_action('safequote_nhtsa_fetch', array('SafeQuote_NHTSA_Init', 'cron_fetch'));
+add_action('safequote_nhtsa_csv_sync', array('SafeQuote_NHTSA_Init', 'cron_csv_sync'));
 add_action('safequote_nhtsa_validate', array('SafeQuote_NHTSA_Init', 'cron_validate'));
 add_action('safequote_nhtsa_cleanup', array('SafeQuote_NHTSA_Init', 'cron_cleanup'));
 
