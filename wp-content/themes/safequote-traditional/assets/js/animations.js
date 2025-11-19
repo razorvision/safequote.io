@@ -19,6 +19,16 @@
         bounce: 'bounce'
     };
 
+    // Check if user prefers reduced motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /**
+     * Check if animations should be disabled
+     */
+    function shouldReduceMotion() {
+        return prefersReducedMotion;
+    }
+
     /**
      * Initialize animations
      */
@@ -34,6 +44,13 @@
 
         // Initialize counter animations
         initCounterAnimations();
+
+        // Listen for changes to prefers-reduced-motion media query
+        const mediaQueryList = window.matchMedia('(prefers-reduced-motion: reduce)');
+        mediaQueryList.addEventListener('change', (event) => {
+            // Handle motion preference changes
+            console.log('Motion preference changed:', event.matches);
+        });
     }
 
     /**
@@ -169,6 +186,13 @@
     function animateCounter(element) {
         const target = parseInt(element.dataset.counter);
         const duration = parseInt(element.dataset.duration) || 2000;
+
+        // If user prefers reduced motion, skip animation and show final value
+        if (shouldReduceMotion()) {
+            element.textContent = formatNumber(target);
+            return;
+        }
+
         const start = 0;
         const increment = target / (duration / 16);
         let current = start;
@@ -190,6 +214,14 @@
     function animate(element, animation, duration = 300) {
         if (!animationClasses[animation]) {
             console.warn(`Animation "${animation}" not found`);
+            return;
+        }
+
+        // Skip animations if user prefers reduced motion
+        if (shouldReduceMotion()) {
+            // For reduced motion, just show the element without animation
+            element.style.opacity = '1';
+            element.style.visibility = 'visible';
             return;
         }
 
@@ -216,8 +248,15 @@
      * Fade element in
      */
     function fadeIn(element, duration = 300) {
-        element.style.opacity = '0';
         element.style.display = 'block';
+
+        // If user prefers reduced motion, skip the transition
+        if (shouldReduceMotion()) {
+            element.style.opacity = '1';
+            return;
+        }
+
+        element.style.opacity = '0';
 
         requestAnimationFrame(() => {
             element.style.transition = `opacity ${duration}ms`;
@@ -229,6 +268,12 @@
      * Fade element out
      */
     function fadeOut(element, duration = 300) {
+        // If user prefers reduced motion, hide immediately
+        if (shouldReduceMotion()) {
+            element.style.display = 'none';
+            return;
+        }
+
         element.style.transition = `opacity ${duration}ms`;
         element.style.opacity = '0';
 
@@ -241,6 +286,13 @@
      * Slide element
      */
     function slide(element, direction = 'down', show = true, duration = 300) {
+        // If user prefers reduced motion, skip animation
+        if (shouldReduceMotion()) {
+            element.style.display = show ? 'block' : 'none';
+            element.style.opacity = show ? '1' : '0';
+            return;
+        }
+
         const animations = {
             down: show ? 'slideInDown' : 'slideOutUp',
             up: show ? 'slideInUp' : 'slideOutDown',

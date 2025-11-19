@@ -89,29 +89,33 @@
     }
 
     /**
-     * Initialize scroll reveal animations
+     * Initialize scroll reveal animations using Intersection Observer
      */
     function initScrollReveal() {
         const reveals = document.querySelectorAll('.reveal');
 
         if (reveals.length === 0) return;
 
-        const revealOnScroll = function() {
-            reveals.forEach(element => {
-                const windowHeight = window.innerHeight;
-                const elementTop = element.getBoundingClientRect().top;
-                const elementVisible = 150;
-
-                if (elementTop < windowHeight - elementVisible) {
-                    element.classList.add('active');
-                }
-            });
+        // Use Intersection Observer for better performance
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px 0px -150px 0px', // Trigger 150px before element comes into view
+            threshold: 0
         };
 
-        window.addEventListener('scroll', revealOnScroll);
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    // Optionally stop observing once animated
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
 
-        // Initial check
-        revealOnScroll();
+        reveals.forEach(element => {
+            observer.observe(element);
+        });
     }
 
     /**

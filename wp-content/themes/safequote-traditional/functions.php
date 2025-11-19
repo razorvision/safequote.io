@@ -208,8 +208,8 @@ function safequote_enqueue_scripts() {
         true
     );
 
-    // Safety Ratings page functionality (only on safety ratings page)
-    if (is_page('safequote-safety-ratings')) {
+    // Safety Ratings page functionality (on dedicated page AND front page)
+    if (is_page('safequote-safety-ratings') || is_front_page()) {
         wp_enqueue_script(
             'safequote-safety-ratings',
             SAFEQUOTE_THEME_URI . '/assets/js/safety-ratings.js',

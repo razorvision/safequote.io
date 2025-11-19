@@ -95,6 +95,9 @@
      * Load initial filter data
      */
     function loadInitialFilters() {
+        // Restore filters from URL parameters if present
+        restoreFiltersFromURL();
+
         // Check if we have AJAX URL from localized script
         if (typeof safequote_ajax !== 'undefined') {
             // Load makes for the selected year if any
@@ -103,6 +106,104 @@
                 loadMakes(selectedYear);
             }
         }
+    }
+
+    /**
+     * Restore filters from URL parameters
+     */
+    function restoreFiltersFromURL() {
+        const params = new URLSearchParams(window.location.search);
+
+        // Restore year
+        if (params.has('year')) {
+            const year = params.get('year');
+            filterState.year = year;
+            if (elements.yearSelect) {
+                elements.yearSelect.value = year;
+            }
+        }
+
+        // Restore make
+        if (params.has('make')) {
+            filterState.make = params.get('make');
+        }
+
+        // Restore model
+        if (params.has('model')) {
+            filterState.model = params.get('model');
+        }
+
+        // Restore price range
+        if (params.has('minPrice')) {
+            filterState.minPrice = parseInt(params.get('minPrice'));
+            if (elements.minPriceInput) {
+                elements.minPriceInput.value = filterState.minPrice;
+            }
+        }
+
+        if (params.has('maxPrice')) {
+            filterState.maxPrice = parseInt(params.get('maxPrice'));
+            if (elements.maxPriceInput) {
+                elements.maxPriceInput.value = filterState.maxPrice;
+            }
+        }
+
+        // Restore safety rating
+        if (params.has('minSafetyRating')) {
+            const rating = parseInt(params.get('minSafetyRating'));
+            filterState.minSafetyRating = rating;
+
+            // Update visual state for safety stars
+            const stars = elements.safetyRatingFilter?.querySelectorAll('.safety-star svg');
+            stars?.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('fill-gray-300');
+                    star.classList.add('fill-yellow-400');
+                } else {
+                    star.classList.remove('fill-yellow-400');
+                    star.classList.add('fill-gray-300');
+                }
+            });
+        }
+
+        // If we have year and make from URL, load and apply filters
+        if (filterState.year && filterState.make) {
+            // Load makes and models, then auto-apply filters
+            setTimeout(() => {
+                loadMakes(filterState.year).then(() => {
+                    if (filterState.make && elements.makeSelect) {
+                        elements.makeSelect.value = filterState.make;
+                        loadModels(filterState.year, filterState.make).then(() => {
+                            if (filterState.model && elements.modelSelect) {
+                                elements.modelSelect.value = filterState.model;
+                            }
+                            // Auto-apply the restored filters
+                            applyFilters();
+                        });
+                    }
+                });
+            }, 100);
+        }
+    }
+
+    /**
+     * Update URL with current filter state
+     */
+    function updateURLWithFilters() {
+        const params = new URLSearchParams();
+
+        // Add non-empty filters to URL
+        if (filterState.year) params.set('year', filterState.year);
+        if (filterState.make) params.set('make', filterState.make);
+        if (filterState.model) params.set('model', filterState.model);
+        if (filterState.minPrice > 0) params.set('minPrice', filterState.minPrice);
+        if (filterState.maxPrice < 200000) params.set('maxPrice', filterState.maxPrice);
+        if (filterState.minSafetyRating > 0) params.set('minSafetyRating', filterState.minSafetyRating);
+
+        // Update browser URL without reloading
+        const queryString = params.toString();
+        const newURL = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
+        window.history.pushState({filters: filterState}, '', newURL);
     }
 
     /**
@@ -316,6 +417,9 @@
                 }
             });
 
+            // Update browser URL with current filters
+            updateURLWithFilters();
+
             // Make AJAX request to WordPress
             const response = await fetch(safequote_ajax.ajax_url, {
                 method: 'POST',
@@ -510,11 +614,45 @@
         init();
     }
 
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', function(event) {
+        if (event.state && event.state.filters) {
+            // Restore filter state from history
+            Object.assign(filterState, event.state.filters);
+
+            // Update form fields
+            if (elements.yearSelect) elements.yearSelect.value = filterState.year || '';
+            if (elements.makeSelect) elements.makeSelect.value = filterState.make || '';
+            if (elements.modelSelect) elements.modelSelect.value = filterState.model || '';
+            if (elements.minPriceInput) elements.minPriceInput.value = filterState.minPrice || 0;
+            if (elements.maxPriceInput) elements.maxPriceInput.value = filterState.maxPrice || 200000;
+
+            // Update safety rating stars
+            const stars = elements.safetyRatingFilter?.querySelectorAll('.safety-star svg');
+            const rating = filterState.minSafetyRating || 0;
+            stars?.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('fill-gray-300');
+                    star.classList.add('fill-yellow-400');
+                } else {
+                    star.classList.remove('fill-yellow-400');
+                    star.classList.add('fill-gray-300');
+                }
+            });
+
+            // Re-apply filters to show results
+            if (filterState.year && filterState.make) {
+                applyFilters();
+            }
+        }
+    });
+
     // Expose API
     window.SafeQuoteFilters = {
         init: init,
         applyFilters: applyFilters,
-        reset: handleFormReset
+        reset: handleFormReset,
+        updateURL: updateURLWithFilters
     };
 
 })();

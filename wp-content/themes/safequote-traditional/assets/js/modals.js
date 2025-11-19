@@ -97,16 +97,17 @@
      */
     function create(options) {
         const modalId = options.id || 'modal-' + Date.now();
+        const headerId = `${modalId}-header`;
 
-        // Create modal HTML
+        // Create modal HTML with ARIA attributes
         const modalHtml = `
-            <div data-modal="${modalId}" class="modal hidden fixed inset-0 z-50">
+            <div data-modal="${modalId}" class="modal hidden fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby="${headerId}">
                 <div class="modal-backdrop fixed inset-0 bg-black bg-opacity-50"></div>
                 <div class="modal-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl max-w-${options.size || '2xl'} w-full max-h-[90vh] overflow-hidden">
                     ${options.header !== false ? `
                     <div class="modal-header flex items-center justify-between p-6 border-b">
-                        <h3 class="text-2xl font-bold">${options.title || ''}</h3>
-                        <button data-modal-close class="text-gray-500 hover:text-gray-700">
+                        <h3 id="${headerId}" class="text-2xl font-bold">${options.title || ''}</h3>
+                        <button data-modal-close class="text-gray-500 hover:text-gray-700" aria-label="Close dialog">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
@@ -143,6 +144,57 @@
     }
 
     /**
+     * Get all focusable elements within a modal
+     */
+    function getFocusableElements(modalElement) {
+        const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        return Array.from(modalElement.querySelectorAll(focusableSelectors));
+    }
+
+    /**
+     * Announce to screen readers
+     */
+    function announceToScreenReader(message) {
+        const announcement = document.createElement('div');
+        announcement.setAttribute('role', 'status');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.className = 'sr-only';
+        announcement.textContent = message;
+        document.body.appendChild(announcement);
+
+        // Remove after announcement
+        setTimeout(() => {
+            document.body.removeChild(announcement);
+        }, 1000);
+    }
+
+    /**
+     * Handle focus trap for keyboard navigation
+     */
+    function handleModalKeydown(event, modalElement) {
+        if (event.key !== 'Tab') return;
+
+        const focusableElements = getFocusableElements(modalElement);
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+        const activeElement = document.activeElement;
+
+        // Shift + Tab on first element - go to last
+        if (event.shiftKey && activeElement === firstElement) {
+            event.preventDefault();
+            lastElement.focus();
+        }
+        // Tab on last element - go to first
+        else if (!event.shiftKey && activeElement === lastElement) {
+            event.preventDefault();
+            firstElement.focus();
+        }
+    }
+
+    /**
      * Open a modal
      */
     function open(id, data) {
@@ -175,11 +227,20 @@
             modal.onOpen(data);
         }
 
-        // Focus management
-        const firstFocusable = modal.element.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-        if (firstFocusable) {
-            firstFocusable.focus();
+        // Focus management - focus first focusable element
+        const focusableElements = getFocusableElements(modal.element);
+        if (focusableElements.length > 0) {
+            focusableElements[0].focus();
         }
+
+        // Add keyboard event listener for focus trap
+        const handleKeydown = (event) => handleModalKeydown(event, modal.element);
+        modal.element.addEventListener('keydown', handleKeydown);
+        modal._keydownListener = handleKeydown;
+
+        // Announce to screen readers
+        const title = modal.element.querySelector('[id$="-header"]')?.textContent || 'Dialog opened';
+        announceToScreenReader(`${title} dialog has opened`);
 
         return modal;
     }
@@ -194,6 +255,16 @@
 
         // Remove animation
         modal.element.classList.remove('show');
+
+        // Remove keyboard event listener
+        if (modal._keydownListener) {
+            modal.element.removeEventListener('keydown', modal._keydownListener);
+            delete modal._keydownListener;
+        }
+
+        // Announce to screen readers
+        const title = modal.element.querySelector('[id$="-header"]')?.textContent || 'Dialog';
+        announceToScreenReader(`${title} dialog has closed`);
 
         // Hide after animation
         setTimeout(() => {
