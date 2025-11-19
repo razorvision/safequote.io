@@ -36,7 +36,7 @@
 
                 <div class="flex items-center gap-2 md:gap-4">
                     <!-- Desktop Navigation - EXACT MATCH -->
-                    <nav class="hidden md:flex items-center gap-6">
+                    <nav class="hidden md:flex items-center gap-6" role="navigation" aria-label="<?php esc_attr_e('Primary', 'safequote-traditional'); ?>">
                         <a href="/?flow=findCar" class="text-gray-700 hover:text-primary transition-colors font-medium cursor-pointer">
                             <?php esc_html_e('Vehicles', 'safequote-traditional'); ?>
                         </a>
@@ -44,14 +44,14 @@
                             <?php esc_html_e('Insurance', 'safequote-traditional'); ?>
                         </a>
                         <a href="/safequote-safety-ratings" class="text-gray-700 hover:text-primary transition-colors font-medium cursor-pointer flex items-center">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                             <?php esc_html_e('Safety Ratings', 'safequote-traditional'); ?>
                         </a>
                         <a href="#" id="dashboard-link" class="flex items-center text-gray-700 hover:text-primary transition-colors font-medium cursor-pointer">
                             <!-- LayoutDashboard Icon (matching React's lucide-react LayoutDashboard) -->
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <rect x="3" y="3" width="7" height="7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></rect>
                                 <rect x="14" y="3" width="7" height="7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></rect>
                                 <rect x="14" y="14" width="7" height="7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></rect>
@@ -62,16 +62,16 @@
                     </nav>
 
                     <!-- Login Button -->
-                    <button id="login-button" class="hidden md:flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button id="login-button" class="hidden md:flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors" aria-label="<?php esc_attr_e('User login', 'safequote-traditional'); ?>">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                         </svg>
                         <?php esc_html_e('Login', 'safequote-traditional'); ?>
                     </button>
 
                     <!-- Mobile Menu Button -->
-                    <button id="mobile-menu-button" class="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button id="mobile-menu-button" class="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors" aria-label="<?php esc_attr_e('Toggle navigation menu', 'safequote-traditional'); ?>" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
                     </button>
@@ -80,7 +80,7 @@
         </div>
 
         <!-- Mobile menu (hidden by default) -->
-        <div class="md:hidden hidden" id="mobile-menu">
+        <nav class="md:hidden hidden" id="mobile-menu" role="navigation" aria-label="<?php esc_attr_e('Mobile', 'safequote-traditional'); ?>">
             <div class="px-4 py-2 space-y-1 bg-white border-t border-gray-200">
                 <a href="/?flow=findCar" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md font-medium">
                     <?php esc_html_e('Vehicles', 'safequote-traditional'); ?>
@@ -98,7 +98,7 @@
                     <?php esc_html_e('Login', 'safequote-traditional'); ?>
                 </button>
             </div>
-        </div>
+        </nav>
     </header>
 
-    <div id="content" class="site-content">
+    <main id="primary" role="main" class="site-content">

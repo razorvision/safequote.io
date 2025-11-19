@@ -16,9 +16,9 @@ $vehicles = isset( $vehicles ) ? $vehicles : array();
 
 <div id="vehicle-grid" class="vehicle-grid-container">
 	<div class="flex items-center justify-between mb-6">
-		<h3 class="text-2xl font-bold text-gray-900">
+		<h2 class="text-2xl font-bold text-gray-900">
 			<?php esc_html_e( 'Available Vehicles', 'safequote-traditional' ); ?>
-		</h3>
+		</h2>
 		<span class="text-gray-600 text-lg">
 			<?php echo esc_html( count( $vehicles ) ); ?>
 			<?php esc_html_e( 'vehicles found', 'safequote-traditional' ); ?>

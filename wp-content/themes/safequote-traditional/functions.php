@@ -462,6 +462,11 @@ require_once SAFEQUOTE_THEME_DIR . '/inc/extras.php';
 require_once SAFEQUOTE_THEME_DIR . '/inc/customizer.php';
 
 /**
+ * SEO features: Open Graph, Twitter Cards, Schema.org
+ */
+require_once SAFEQUOTE_THEME_DIR . '/inc/seo.php';
+
+/**
  * Load custom post types
  */
 require_once SAFEQUOTE_THEME_DIR . '/inc/post-types.php';
