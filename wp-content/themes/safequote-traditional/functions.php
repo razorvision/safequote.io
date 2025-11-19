@@ -18,6 +18,18 @@ define('SAFEQUOTE_THEME_DIR', get_template_directory());
 define('SAFEQUOTE_THEME_URI', get_template_directory_uri());
 
 /**
+ * Load NHTSA Integration Classes
+ *
+ * Includes all NHTSA API caching, sync, and validation classes.
+ */
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-database.php';
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-cache.php';
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-discover.php';
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-fetch.php';
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-validate.php';
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-init.php';
+
+/**
  * Theme setup
  */
 function safequote_theme_setup() {
