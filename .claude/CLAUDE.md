@@ -7,8 +7,7 @@
 ### ✅ Required Reading (In Order):
 
 1. [ ] Read `.claude/instructions.md` (MANDATORY - contains sync commands)
-2. [ ] Read `.claude/requirements.md` (coding standards)
-3. [ ] Check the GitHub issue you're working on
+2. [ ] Check the GitHub issue you're working on
 
 ### ✅ Critical Commands to Remember:
 

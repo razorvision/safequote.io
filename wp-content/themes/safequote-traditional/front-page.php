@@ -29,8 +29,9 @@ get_header();
             <div id="vehicles-section" class="hidden space-y-8" aria-live="assertive" aria-label="<?php esc_attr_e('Vehicle search results', 'safequote-traditional'); ?>">
                 <div id="vehicles">
                     <?php
-                    // Include Top Safety Picks template part
-                    set_query_var('vehicles', safequote_get_top_safety_picks(4)); // Get top 4 safety-rated vehicles
+                    // Include Top Safety Picks template part with NHTSA ratings merged in
+                    require_once SAFEQUOTE_THEME_DIR . '/inc/vehicle-data-nhtsa.php';
+                    set_query_var('vehicles', safequote_get_top_safety_picks_from_db(4)); // Get top 4 safety-rated vehicles with NHTSA data
                     get_template_part('template-parts/top-safety-picks');
                     ?>
                 </div>
@@ -47,8 +48,9 @@ get_header();
                 ?>
 
                 <?php
-                // Include Vehicle Grid template part
-                set_query_var('vehicles', safequote_get_vehicles()); // Get all vehicles
+                // Include Vehicle Grid template part with NHTSA data
+                require_once SAFEQUOTE_THEME_DIR . '/inc/vehicle-data-nhtsa.php';
+                set_query_var('vehicles', safequote_get_vehicles_from_nhtsa(array('limit' => 10))); // Get top 10 NHTSA-rated vehicles
                 get_template_part('template-parts/vehicle-grid');
                 ?>
 

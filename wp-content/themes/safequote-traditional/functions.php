@@ -18,6 +18,25 @@ define('SAFEQUOTE_THEME_DIR', get_template_directory());
 define('SAFEQUOTE_THEME_URI', get_template_directory_uri());
 
 /**
+ * Load NHTSA Integration Classes
+ *
+ * Includes NHTSA CSV import, caching, and validation classes.
+ * Uses official NHTSA CSV as primary data source instead of API polling.
+ */
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-database.php';
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-cache.php';
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-csv-import.php';
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-validate.php';
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-init.php';
+require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-admin-page.php';
+
+/**
+ * Initialize NHTSA Admin Page
+ */
+add_action('admin_menu', array('SafeQuote_NHTSA_Admin_Page', 'register_menu'));
+add_action('admin_init', array('SafeQuote_NHTSA_Admin_Page', 'handle_form_submission'));
+
+/**
  * Theme setup
  */
 function safequote_theme_setup() {

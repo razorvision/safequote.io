@@ -18,8 +18,6 @@ Before starting ANY task, confirm you have:
 1. **Read relevant .claude/ files**:
    - README.md (orientation)
    - CLAUDE.md (pre-flight checklist)
-   - premises.md (project context)
-   - requirements.md (standards)
 
 2. **Read the GitHub issue completely**:
    - Understand acceptance criteria

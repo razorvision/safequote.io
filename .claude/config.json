@@ -4,7 +4,6 @@
     "primary": ".claude/instructions.md",
     "required_reading": [
       ".claude/instructions.md",
-      ".claude/requirements.md"
     ],
     "critical_reminders": [
       "ALWAYS sync to Local WP after changes using the command in instructions.md lines 501-523",
