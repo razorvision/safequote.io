@@ -110,7 +110,7 @@ class SafeQuote_NHTSA_Fetch {
             // Attempt to fetch from NHTSA API
             $rating_data = SafeQuote_NHTSA_Cache::get_vehicle_rating($year, $make, $model);
 
-            if ($rating_data && isset($rating_data['overall_rating'])) {
+            if ($rating_data && isset($rating_data['OverallRating'])) {
                 // Data found - update sync log as success
                 SafeQuote_NHTSA_Database::update_sync_log(
                     $year,
@@ -118,9 +118,9 @@ class SafeQuote_NHTSA_Fetch {
                     $model,
                     'success',
                     array(
-                        'nhtsa_rating' => $rating_data['overall_rating'],
+                        'nhtsa_rating' => $rating_data['OverallRating'],
                         'has_data' => true,
-                        'vehicle_id' => $rating_data['vehicle_id'] ?? null,
+                        'vehicle_id' => $rating_data['VehicleId'] ?? null,
                         'sync_attempt' => 0,
                         'last_attempt' => current_time('mysql'),
                     )

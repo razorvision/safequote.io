@@ -1251,7 +1251,7 @@ class SafeQuote_NHTSA_Admin_Page {
                     error_log("[NHTSA Batch] {$progress} No API data for {$vehicle_label}");
                 } else {
                     // Store API data regardless of whether it has ratings (even "Not Rated" is useful)
-                    $rating = $api_data['overall_rating'] ?? 'Not Rated';
+                    $rating = $api_data['OverallRating'] ?? 'Not Rated';
                     $result = SafeQuote_NHTSA_Database::update_vehicle_cache(
                         $vehicle->year,
                         $vehicle->make,
@@ -1501,7 +1501,7 @@ class SafeQuote_NHTSA_Admin_Page {
                     error_log("[NHTSA Year Batch] $year: {$progress} No API data for {$vehicle_label}");
                 } else {
                     // Store API data regardless of whether it has ratings (even "Not Rated" is useful)
-                    $rating = $api_data['overall_rating'] ?? 'Not Rated';
+                    $rating = $api_data['OverallRating'] ?? 'Not Rated';
                     $result = SafeQuote_NHTSA_Database::update_vehicle_cache(
                         $vehicle->year,
                         $vehicle->make,

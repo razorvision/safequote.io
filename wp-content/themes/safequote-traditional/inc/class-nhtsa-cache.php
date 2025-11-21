@@ -59,7 +59,7 @@ class SafeQuote_NHTSA_Cache {
             $data = json_decode($db_cache->nhtsa_data, true);
 
             // If we have a valid rating from CSV or API, use it
-            if (isset($data['overall_rating']) && $data['overall_rating'] !== null) {
+            if (isset($data['OverallRating']) && $data['OverallRating'] !== null) {
                 // Repopulate transient for faster next request
                 set_transient($cache_key, $data, self::CACHE_TTL_TRANSIENT);
                 error_log("[NHTSA] ✓ Database HIT: {$year} {$make} {$model}");
@@ -72,7 +72,7 @@ class SafeQuote_NHTSA_Cache {
 
             $api_data = self::fetch_from_api($year, $make, $model);
 
-            if ($api_data && isset($api_data['overall_rating']) && $api_data['overall_rating'] !== null) {
+            if ($api_data && isset($api_data['OverallRating']) && $api_data['OverallRating'] !== null) {
                 // Store API result permanently (no expiration) with 'api' source flag
                 SafeQuote_NHTSA_Database::update_vehicle_cache(
                     $year,
@@ -232,46 +232,64 @@ class SafeQuote_NHTSA_Cache {
     /**
      * Parse NHTSA API response into consistent format
      *
-     * Handles API field names and converts "Not Rated" strings to null.
-     * Extracts vehicle image URL if available.
+     * Returns complete NHTSA data to support both summary and detailed displays.
+     * Includes all crash test details, safety features, complaints, recalls, and investigations.
      *
      * @param array $result NHTSA API result.
-     * @return array Normalized rating data.
+     * @return array Complete NHTSA rating data with all fields.
      */
     public static function parse_nhtsa_response($result) {
-        // Helper to convert rating strings to float, handle "Not Rated"
-        $get_rating = function($value) {
-            if ($value === 'Not Rated' || $value === '' || $value === null) {
-                return null;
-            }
-            if (is_numeric($value)) {
-                return floatval($value);
-            }
-            return null;
-        };
-
-        // Extract values with detailed logging
-        $vehicle_id = isset($result['VehicleId']) ? intval($result['VehicleId']) : null;
-        $overall = $get_rating(isset($result['OverallRating']) ? $result['OverallRating'] : null);
-        $front = $get_rating(isset($result['OverallFrontCrashRating']) ? $result['OverallFrontCrashRating'] : null);
-        $side = $get_rating(isset($result['OverallSideCrashRating']) ? $result['OverallSideCrashRating'] : null);
-        $rollover = $get_rating(isset($result['RolloverRating']) ? $result['RolloverRating'] : null);
+        // Return full NHTSA response with all fields intact
+        // This supports detailed display in safety-ratings.js
         $description = isset($result['VehicleDescription']) ? sanitize_text_field($result['VehicleDescription']) : null;
         $year = isset($result['ModelYear']) ? intval($result['ModelYear']) : null;
-        $picture = isset($result['VehiclePicture']) ? sanitize_url($result['VehiclePicture']) : null;
 
-        // Debug log what was extracted
-        error_log("[NHTSA Parse] VehicleId: {$vehicle_id}, Overall: {$overall}, Front: {$front}, Side: {$side}, Rollover: {$rollover}, Desc: {$description}, Year: {$year}, Picture: {$picture}");
+        error_log("[NHTSA Parse] {$year} {$description}: VehicleId={$result['VehicleId']}");
 
+        // Build complete response with all NHTSA fields
         $parsed = array(
-            'vehicle_id' => $vehicle_id,
-            'overall_rating' => $overall,
-            'front_crash' => $front,
-            'side_crash' => $side,
-            'rollover_crash' => $rollover,
-            'description' => $description,
-            'year' => $year,
-            'vehicle_picture' => $picture,
+            // Vehicle identification
+            'VehicleId' => isset($result['VehicleId']) ? intval($result['VehicleId']) : null,
+            'VehicleDescription' => $description,
+            'ModelYear' => $year,
+            'Make' => isset($result['Make']) ? sanitize_text_field($result['Make']) : null,
+            'Model' => isset($result['Model']) ? sanitize_text_field($result['Model']) : null,
+            'VehiclePicture' => isset($result['VehiclePicture']) ? sanitize_url($result['VehiclePicture']) : null,
+
+            // Overall ratings
+            'OverallRating' => isset($result['OverallRating']) ? $result['OverallRating'] : null,
+            'OverallFrontCrashRating' => isset($result['OverallFrontCrashRating']) ? $result['OverallFrontCrashRating'] : null,
+            'OverallSideCrashRating' => isset($result['OverallSideCrashRating']) ? $result['OverallSideCrashRating'] : null,
+            'RolloverRating' => isset($result['RolloverRating']) ? $result['RolloverRating'] : null,
+
+            // Detailed crash ratings - driver/passenger side
+            'FrontCrashDriversideRating' => isset($result['FrontCrashDriversideRating']) ? $result['FrontCrashDriversideRating'] : null,
+            'FrontCrashPassengersideRating' => isset($result['FrontCrashPassengersideRating']) ? $result['FrontCrashPassengersideRating'] : null,
+            'SideCrashDriversideRating' => isset($result['SideCrashDriversideRating']) ? $result['SideCrashDriversideRating'] : null,
+            'SideCrashPassengersideRating' => isset($result['SideCrashPassengersideRating']) ? $result['SideCrashPassengersideRating'] : null,
+            'SidePoleCrashRating' => isset($result['SidePoleCrashRating']) ? $result['SidePoleCrashRating'] : null,
+
+            // Rollover details
+            'RolloverRating2' => isset($result['RolloverRating2']) ? $result['RolloverRating2'] : null,
+            'RolloverPossibility' => isset($result['RolloverPossibility']) ? $result['RolloverPossibility'] : null,
+            'RolloverPossibility2' => isset($result['RolloverPossibility2']) ? $result['RolloverPossibility2'] : null,
+            'dynamicTipResult' => isset($result['dynamicTipResult']) ? $result['dynamicTipResult'] : null,
+
+            // Side barrier ratings
+            'combinedSideBarrierAndPoleRating-Front' => isset($result['combinedSideBarrierAndPoleRating-Front']) ? $result['combinedSideBarrierAndPoleRating-Front'] : null,
+            'combinedSideBarrierAndPoleRating-Rear' => isset($result['combinedSideBarrierAndPoleRating-Rear']) ? $result['combinedSideBarrierAndPoleRating-Rear'] : null,
+
+            // Safety features
+            'NHTSAElectronicStabilityControl' => isset($result['NHTSAElectronicStabilityControl']) ? $result['NHTSAElectronicStabilityControl'] : null,
+            'NHTSAForwardCollisionWarning' => isset($result['NHTSAForwardCollisionWarning']) ? $result['NHTSAForwardCollisionWarning'] : null,
+            'NHTSALaneDepartureWarning' => isset($result['NHTSALaneDepartureWarning']) ? $result['NHTSALaneDepartureWarning'] : null,
+
+            // Complaints, recalls, investigations
+            'ComplaintsCount' => isset($result['ComplaintsCount']) ? intval($result['ComplaintsCount']) : 0,
+            'RecallsCount' => isset($result['RecallsCount']) ? intval($result['RecallsCount']) : 0,
+            'InvestigationCount' => isset($result['InvestigationCount']) ? intval($result['InvestigationCount']) : 0,
+
+            // Metadata
             'source' => 'api',
         );
 
