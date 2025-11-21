@@ -36,7 +36,9 @@ class SafeQuote_NHTSA_CSV_Import {
 
         if (!$remote_updated) {
             error_log('[NHTSA CSV] Could not check remote update time');
-            return array('status' => 'failed', 'reason' => 'could_not_check_remote');
+            $error = array('status' => 'failed', 'reason' => 'could_not_check_remote', 'error' => 'Could not retrieve remote file headers');
+            self::store_csv_error($error);
+            return $error;
         }
 
         // Get last import time
@@ -56,11 +58,16 @@ class SafeQuote_NHTSA_CSV_Import {
 
         $result = self::download_and_import_csv();
 
+        // Always update timestamp on attempt (not just success) to prevent infinite retry loops
+        update_option(self::LAST_IMPORT_OPTION, $remote_updated);
+
         if ($result['status'] === 'success') {
-            update_option(self::LAST_IMPORT_OPTION, $remote_updated);
             error_log('[NHTSA CSV] ✓ CSV imported successfully');
+            delete_option('safequote_nhtsa_csv_last_error'); // Clear error on success
         } else {
             error_log('[NHTSA CSV] ✗ CSV import failed: ' . $result['reason']);
+            // Store detailed error for UI display
+            self::store_csv_error($result);
         }
 
         return $result;
@@ -141,10 +148,12 @@ class SafeQuote_NHTSA_CSV_Import {
             ));
 
             if (is_wp_error($response)) {
+                $error_msg = $response->get_error_message();
+                error_log('[NHTSA CSV] Download error: ' . $error_msg);
                 return array(
                     'status' => 'failed',
                     'reason' => 'download_failed',
-                    'error' => $response->get_error_message(),
+                    'error' => 'Failed to download CSV: ' . $error_msg,
                 );
             }
 
@@ -240,7 +249,7 @@ class SafeQuote_NHTSA_CSV_Import {
                     $data['make'],
                     $data['model'],
                     $data['nhtsa_data'],
-                    7 * 24, // 7 days expiry
+                    null, // Permanent storage - never expires or deletes
                     'csv' // Mark as CSV source
                 );
 
@@ -394,8 +403,8 @@ class SafeQuote_NHTSA_CSV_Import {
 
         $table = $wpdb->prefix . 'nhtsa_vehicle_cache';
 
-        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE source = 'csv_import'");
-        $expired = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE source = 'csv_import' AND expires_at < NOW()");
+        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE rating_source = 'csv'");
+        $expired = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE rating_source = 'csv' AND expires_at < NOW()");
         $valid = $total - $expired;
 
         return array(
@@ -433,5 +442,37 @@ class SafeQuote_NHTSA_CSV_Import {
         }
 
         delete_transient(self::REMOTE_HEADERS_CACHE);
+    }
+
+    /**
+     * Store CSV import error for UI display
+     *
+     * @param array $error Error details with status, reason, error message.
+     * @return void
+     */
+    private static function store_csv_error($error) {
+        $errors = get_option('safequote_nhtsa_csv_errors', array());
+
+        // Keep last 5 errors
+        if (!is_array($errors)) {
+            $errors = array();
+        }
+        if (count($errors) >= 5) {
+            array_shift($errors);
+        }
+
+        // Add new error with timestamp
+        $errors[] = array(
+            'timestamp' => current_time('mysql'),
+            'reason' => isset($error['reason']) ? $error['reason'] : 'unknown',
+            'error' => isset($error['error']) ? $error['error'] : '',
+        );
+
+        update_option('safequote_nhtsa_csv_errors', $errors);
+        update_option('safequote_nhtsa_csv_last_error', array(
+            'timestamp' => current_time('mysql'),
+            'reason' => isset($error['reason']) ? $error['reason'] : 'unknown',
+            'error' => isset($error['error']) ? $error['error'] : '',
+        ));
     }
 }

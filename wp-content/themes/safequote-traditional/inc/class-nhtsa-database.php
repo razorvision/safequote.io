@@ -60,6 +60,7 @@ class SafeQuote_NHTSA_Database {
             front_crash DECIMAL(3,1),
             side_crash DECIMAL(3,1),
             rollover_crash DECIMAL(3,1),
+            vehicle_picture VARCHAR(500),
             nhtsa_data LONGTEXT NOT NULL,
             rating_source ENUM('csv', 'api', 'manual') DEFAULT 'csv' NOT NULL,
             cached_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -79,8 +80,52 @@ class SafeQuote_NHTSA_Database {
         dbDelta($sql_sync_log);
         dbDelta($sql_vehicle_cache);
 
+        // Migrate existing tables: add rating_source column if missing
+        self::add_missing_columns();
+
         // Log success
         update_option('safequote_nhtsa_tables_created', current_time('mysql'));
+    }
+
+    /**
+     * Add missing columns to existing tables (for migration)
+     *
+     * @return void
+     */
+    private static function add_missing_columns() {
+        global $wpdb;
+
+        $table_vehicle_cache = $wpdb->prefix . 'nhtsa_vehicle_cache';
+
+        // Check if rating_source column exists
+        $rating_source_exists = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = %s AND COLUMN_NAME = %s",
+                $table_vehicle_cache,
+                'rating_source'
+            )
+        );
+
+        if (empty($rating_source_exists)) {
+            // Column doesn't exist, add it
+            $wpdb->query("ALTER TABLE $table_vehicle_cache ADD COLUMN rating_source ENUM('csv', 'api', 'manual') DEFAULT 'csv' NOT NULL");
+            error_log('[NHTSA DB] Added missing rating_source column to ' . $table_vehicle_cache);
+        }
+
+        // Check if vehicle_picture column exists
+        $vehicle_picture_exists = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = %s AND COLUMN_NAME = %s",
+                $table_vehicle_cache,
+                'vehicle_picture'
+            )
+        );
+
+        if (empty($vehicle_picture_exists)) {
+            // Column doesn't exist, add it
+            $wpdb->query("ALTER TABLE $table_vehicle_cache ADD COLUMN vehicle_picture VARCHAR(500) AFTER rollover_crash");
+            error_log('[NHTSA DB] Added missing vehicle_picture column to ' . $table_vehicle_cache);
+        }
     }
 
     /**
@@ -193,11 +238,11 @@ class SafeQuote_NHTSA_Database {
      * @param string $make         Vehicle make.
      * @param string $model        Vehicle model.
      * @param array  $nhtsa_data   NHTSA API response data.
-     * @param int    $expires_in   Hours until cache expires.
+     * @param int    $expires_in   Hours until cache expires (NULL or 0 = permanent storage, never expires).
      * @param string $source       Data source: 'csv', 'api', 'manual'.
      * @return int|bool Row ID on success, false on failure.
      */
-    public static function update_vehicle_cache($year, $make, $model, $nhtsa_data, $expires_in = 168, $source = 'csv') {
+    public static function update_vehicle_cache($year, $make, $model, $nhtsa_data, $expires_in = null, $source = 'csv') {
         global $wpdb;
 
         $table = $wpdb->prefix . 'nhtsa_vehicle_cache';
@@ -212,7 +257,8 @@ class SafeQuote_NHTSA_Database {
             return true; // Don't overwrite
         }
 
-        $expires_at = date('Y-m-d H:i:s', strtotime("+{$expires_in} hours"));
+        // Set expiration: NULL or 0 means permanent storage (never expires)
+        $expires_at = ($expires_in && $expires_in > 0) ? date('Y-m-d H:i:s', strtotime("+{$expires_in} hours")) : null;
 
         $cache_data = array(
             'year' => $year,
@@ -222,6 +268,7 @@ class SafeQuote_NHTSA_Database {
             'front_crash' => isset($nhtsa_data['front_crash']) ? floatval($nhtsa_data['front_crash']) : null,
             'side_crash' => isset($nhtsa_data['side_crash']) ? floatval($nhtsa_data['side_crash']) : null,
             'rollover_crash' => isset($nhtsa_data['rollover_crash']) ? floatval($nhtsa_data['rollover_crash']) : null,
+            'vehicle_picture' => isset($nhtsa_data['vehicle_picture']) ? sanitize_url($nhtsa_data['vehicle_picture']) : null,
             'nhtsa_data' => json_encode($nhtsa_data),
             'rating_source' => sanitize_text_field($source),
             'expires_at' => $expires_at,
@@ -234,11 +281,11 @@ class SafeQuote_NHTSA_Database {
                 'year' => $year,
                 'make' => $make,
                 'model' => $model,
-            ), null, array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%s'));
+            ), null, array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s'));
         } else {
             // Insert new
             $cache_data['created_at'] = current_time('mysql');
-            return $wpdb->insert($table, $cache_data, array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s'));
+            return $wpdb->insert($table, $cache_data, array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s'));
         }
     }
 
@@ -284,13 +331,11 @@ class SafeQuote_NHTSA_Database {
      * @return int Number of rows deleted.
      */
     public static function clear_expired_cache() {
-        global $wpdb;
-
-        $table = $wpdb->prefix . 'nhtsa_vehicle_cache';
-
-        return $wpdb->query(
-            "DELETE FROM $table WHERE expires_at IS NOT NULL AND expires_at < NOW()"
-        );
+        // ⚠️ DISABLED: Database records are now permanent storage and NEVER deleted.
+        // This function is kept for backward compatibility but no longer performs deletions.
+        // Records are only updated with new data, never removed.
+        error_log("[NHTSA DB] Cleanup check: Database records are permanent storage - no deletions performed");
+        return 0; // Return 0 records deleted (no deletion happens)
     }
 
     /**

@@ -124,20 +124,32 @@
    * @return {Promise}     Promise resolving to rating data
    */
   function fetchRating(year, make, model) {
-    // For now, return a promise that resolves to null
-    // In Phase 3, we'll add an AJAX endpoint to fetch from server cache
+    // Build AJAX URL with parameters
+    const url = new URL(safequote_top_picks.ajax_url, window.location.origin);
+    url.searchParams.set('action', 'get_nhtsa_rating');
+    url.searchParams.set('year', year);
+    url.searchParams.set('make', make);
+    url.searchParams.set('model', model);
+    url.searchParams.set('nonce', safequote_top_picks.nonce);
 
-    return new Promise((resolve) => {
-      // TODO: Add AJAX call to /wp-admin/admin-ajax.php?action=safequote_get_nhtsa_rating
-      // This will use the server-side multi-tier cache:
-      // 1. Check Transients (24h)
-      // 2. Check Database (7d)
-      // 3. Fetch live from NHTSA
-      // 4. Fall back to stale cache
-
-      // For now, resolve with null to show "Not Rated"
-      resolve(null);
-    });
+    return fetch(url.toString())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        // WordPress AJAX returns { success: true/false, data: ... }
+        if (data.success && data.data) {
+          return data.data;
+        }
+        return null;
+      })
+      .catch((error) => {
+        console.error(`[Top Safety Picks] AJAX error for ${year} ${make} ${model}:`, error);
+        throw error; // Re-throw to let caller handle
+      });
   }
 
   /**

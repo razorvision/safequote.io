@@ -73,13 +73,13 @@ class SafeQuote_NHTSA_Cache {
             $api_data = self::fetch_from_api($year, $make, $model);
 
             if ($api_data && isset($api_data['overall_rating']) && $api_data['overall_rating'] !== null) {
-                // Store API result permanently with 'api' source flag
+                // Store API result permanently (no expiration) with 'api' source flag
                 SafeQuote_NHTSA_Database::update_vehicle_cache(
                     $year,
                     $make,
                     $model,
                     $api_data,
-                    30 * 24, // 30 days expiry
+                    null, // Permanent storage - never expires or deletes
                     'api' // Mark as API source - won't be overwritten by CSV syncs
                 );
 
@@ -107,7 +107,7 @@ class SafeQuote_NHTSA_Cache {
                 $make,
                 $model,
                 $data,
-                30 * 24, // 30 days
+                null, // Permanent storage - never expires or deletes
                 'api' // From API
             );
 
@@ -132,16 +132,21 @@ class SafeQuote_NHTSA_Cache {
     /**
      * Fetch vehicle rating from NHTSA API with error handling
      *
+     * Two-step process (matches front-page safety-ratings.js):
+     * 1. Get VehicleId from modelyear/make/model endpoint
+     * 2. Get detailed ratings from VehicleId endpoint
+     *
      * @param int    $year  Vehicle model year.
      * @param string $make  Vehicle make.
      * @param string $model Vehicle model.
      * @return array|false Rating data or false on failure.
      */
-    private static function fetch_from_api($year, $make, $model) {
-        $endpoint = self::API_BASE_URL . "/modelyear/{$year}/make/{$make}/model/{$model}";
-
+    public static function fetch_from_api($year, $make, $model) {
         try {
-            $response = wp_remote_get($endpoint, array(
+            // STEP 1: Get VehicleId from model/make/year endpoint
+            $model_endpoint = self::API_BASE_URL . "/modelyear/{$year}/make/" . urlencode($make) . "/model/" . urlencode($model);
+
+            $response = wp_remote_get($model_endpoint, array(
                 'timeout' => self::API_TIMEOUT,
                 'sslverify' => true,
                 'headers' => array(
@@ -151,29 +156,70 @@ class SafeQuote_NHTSA_Cache {
 
             // Check for network errors
             if (is_wp_error($response)) {
-                error_log("[NHTSA API Error] {$response->get_error_message()}");
+                error_log("[NHTSA API Error] Step 1 model lookup failed: {$response->get_error_message()}");
                 return false;
             }
 
             // Check HTTP status
             $status = wp_remote_retrieve_response_code($response);
-
             if ($status !== 200) {
-                error_log("[NHTSA HTTP Error] Status: {$status}");
+                error_log("[NHTSA HTTP Error] Step 1 status {$status} for {$year} {$make} {$model}");
                 return false;
             }
 
-            // Parse response
+            // Parse response from Step 1
             $body = wp_remote_retrieve_body($response);
             $data = json_decode($body, true);
 
             if (!$data || !isset($data['Results']) || empty($data['Results'])) {
-                error_log("[NHTSA] No data available for {$year} {$make} {$model}");
+                error_log("[NHTSA] No vehicle found for {$year} {$make} {$model}");
                 return false;
             }
 
-            // Extract and validate rating data
-            $result = $data['Results'][0]; // Get first result
+            // Extract VehicleId from first result
+            $vehicle_id = $data['Results'][0]['VehicleId'] ?? null;
+            if (!$vehicle_id) {
+                error_log("[NHTSA] No VehicleId in response for {$year} {$make} {$model}");
+                return false;
+            }
+
+            // STEP 2: Get detailed ratings using VehicleId
+            $ratings_endpoint = self::API_BASE_URL . "/VehicleId/{$vehicle_id}?format=json";
+
+            $ratings_response = wp_remote_get($ratings_endpoint, array(
+                'timeout' => self::API_TIMEOUT,
+                'sslverify' => true,
+                'headers' => array(
+                    'Accept' => 'application/json',
+                ),
+            ));
+
+            // Check for network errors
+            if (is_wp_error($ratings_response)) {
+                error_log("[NHTSA API Error] Step 2 ratings lookup failed for VehicleId {$vehicle_id}: {$ratings_response->get_error_message()}");
+                return false;
+            }
+
+            // Check HTTP status
+            $ratings_status = wp_remote_retrieve_response_code($ratings_response);
+            if ($ratings_status !== 200) {
+                error_log("[NHTSA HTTP Error] Step 2 status {$ratings_status} for VehicleId {$vehicle_id}");
+                return false;
+            }
+
+            // Parse ratings response
+            $ratings_body = wp_remote_retrieve_body($ratings_response);
+            $ratings_data = json_decode($ratings_body, true);
+
+            if (!$ratings_data || !isset($ratings_data['Results']) || empty($ratings_data['Results'])) {
+                error_log("[NHTSA] No ratings data for VehicleId {$vehicle_id} ({$year} {$make} {$model})");
+                return false;
+            }
+
+            // Extract and parse the ratings
+            $result = $ratings_data['Results'][0];
+            $overall = $result['OverallRating'] ?? null;
+            error_log("[NHTSA Success] VehicleId {$vehicle_id} - {$year} {$make} {$model}: OverallRating={$overall}");
 
             return self::parse_nhtsa_response($result);
 
@@ -187,11 +233,12 @@ class SafeQuote_NHTSA_Cache {
      * Parse NHTSA API response into consistent format
      *
      * Handles API field names and converts "Not Rated" strings to null.
+     * Extracts vehicle image URL if available.
      *
      * @param array $result NHTSA API result.
      * @return array Normalized rating data.
      */
-    private static function parse_nhtsa_response($result) {
+    public static function parse_nhtsa_response($result) {
         // Helper to convert rating strings to float, handle "Not Rated"
         $get_rating = function($value) {
             if ($value === 'Not Rated' || $value === '' || $value === null) {
@@ -203,18 +250,28 @@ class SafeQuote_NHTSA_Cache {
             return null;
         };
 
+        // Extract values with detailed logging
+        $vehicle_id = isset($result['VehicleId']) ? intval($result['VehicleId']) : null;
+        $overall = $get_rating(isset($result['OverallRating']) ? $result['OverallRating'] : null);
+        $front = $get_rating(isset($result['OverallFrontCrashRating']) ? $result['OverallFrontCrashRating'] : null);
+        $side = $get_rating(isset($result['OverallSideCrashRating']) ? $result['OverallSideCrashRating'] : null);
+        $rollover = $get_rating(isset($result['RolloverRating']) ? $result['RolloverRating'] : null);
+        $description = isset($result['VehicleDescription']) ? sanitize_text_field($result['VehicleDescription']) : null;
+        $year = isset($result['ModelYear']) ? intval($result['ModelYear']) : null;
+        $picture = isset($result['VehiclePicture']) ? sanitize_url($result['VehiclePicture']) : null;
+
+        // Debug log what was extracted
+        error_log("[NHTSA Parse] VehicleId: {$vehicle_id}, Overall: {$overall}, Front: {$front}, Side: {$side}, Rollover: {$rollover}, Desc: {$description}, Year: {$year}, Picture: {$picture}");
+
         $parsed = array(
-            'vehicle_id' => isset($result['VehicleId']) ? intval($result['VehicleId']) : null,
-            // Overall rating from OverallRating field
-            'overall_rating' => $get_rating(isset($result['OverallRating']) ? $result['OverallRating'] : null),
-            // Front crash from OverallFrontCrashRating field
-            'front_crash' => $get_rating(isset($result['OverallFrontCrashRating']) ? $result['OverallFrontCrashRating'] : null),
-            // Side crash from OverallSideCrashRating field
-            'side_crash' => $get_rating(isset($result['OverallSideCrashRating']) ? $result['OverallSideCrashRating'] : null),
-            // Rollover from RolloverRating field
-            'rollover_crash' => $get_rating(isset($result['RolloverRating']) ? $result['RolloverRating'] : null),
-            'description' => isset($result['VehicleDescription']) ? sanitize_text_field($result['VehicleDescription']) : null,
-            'year' => isset($result['ModelYear']) ? intval($result['ModelYear']) : null,
+            'vehicle_id' => $vehicle_id,
+            'overall_rating' => $overall,
+            'front_crash' => $front,
+            'side_crash' => $side,
+            'rollover_crash' => $rollover,
+            'description' => $description,
+            'year' => $year,
+            'vehicle_picture' => $picture,
             'source' => 'api',
         );
 

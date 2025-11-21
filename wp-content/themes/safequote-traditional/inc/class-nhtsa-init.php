@@ -24,8 +24,12 @@ class SafeQuote_NHTSA_Init {
      * @return void
      */
     public static function init() {
-        // Create database tables
-        self::create_tables();
+        // Guard: prevent multiple initializations (after_setup_theme can fire multiple times)
+        static $initialized = false;
+        if ($initialized) {
+            return;
+        }
+        $initialized = true;
 
         // Schedule cron jobs
         self::schedule_crons();
@@ -37,19 +41,41 @@ class SafeQuote_NHTSA_Init {
         if (is_admin()) {
             add_action('wp_dashboard_setup', array(__CLASS__, 'register_dashboard_widgets'));
         }
-
-        error_log('[NHTSA Init] Initialization complete');
     }
 
     /**
-     * Create database tables
+     * Initialize NHTSA on theme activation
+     *
+     * Called once when theme is switched to, creates database tables
+     * and schedules initial cron jobs.
      *
      * @return void
      */
-    private static function create_tables() {
+    public static function activate() {
+        // Create database tables on theme activation
+        self::create_database_tables();
+        error_log('[NHTSA Init] Theme activated - database tables initialized');
+    }
+
+    /**
+     * Create or repair database tables
+     *
+     * Public method that can be called from admin page or theme activation.
+     * Safe to call multiple times - uses one-time initialization flag.
+     *
+     * @return void
+     */
+    public static function create_database_tables() {
+        // Check if already initialized
+        if (get_option('safequote_nhtsa_db_initialized')) {
+            return;
+        }
+
         require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-database.php';
         SafeQuote_NHTSA_Database::create_tables();
-        error_log('[NHTSA Init] Database tables created');
+
+        // Mark as initialized
+        update_option('safequote_nhtsa_db_initialized', current_time('mysql'));
     }
 
     /**
@@ -87,6 +113,17 @@ class SafeQuote_NHTSA_Init {
                 'safequote_nhtsa_cleanup'
             );
             error_log('[NHTSA Init] Scheduled cleanup cron');
+        }
+
+        // Schedule auto batch fill (every 3 minutes)
+        // Automatically processes 50 vehicles at a time from NHTSA API
+        if (!wp_next_scheduled('safequote_nhtsa_auto_batch_fill')) {
+            wp_schedule_event(
+                time(),
+                'three_minutes',
+                'safequote_nhtsa_auto_batch_fill'
+            );
+            error_log('[NHTSA Init] Scheduled auto batch fill cron (every 3 minutes)');
         }
     }
 
@@ -130,6 +167,50 @@ class SafeQuote_NHTSA_Init {
         SafeQuote_NHTSA_Database::get_sync_stats(); // Also updates transient
 
         error_log("[NHTSA Cron] Cleanup: Removed $expired expired entries");
+    }
+
+    /**
+     * Auto batch fill cron job (every 5 minutes)
+     *
+     * Automatically processes 50 vehicles at a time from NHTSA API
+     * Runs in background without requiring admin intervention
+     *
+     * @return void
+     */
+    public static function cron_auto_batch_fill() {
+        require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-admin-page.php';
+
+        // Get or create batch session if doesn't exist
+        $session = get_option('safequote_nhtsa_batch_session');
+
+        // If no active session and there are vehicles to process, start a new one
+        if (!$session) {
+            global $wpdb;
+            $table = $wpdb->prefix . 'nhtsa_vehicle_cache';
+            $remaining = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE nhtsa_overall_rating IS NULL OR vehicle_picture IS NULL");
+
+            if ($remaining > 0) {
+                error_log("[NHTSA Cron] Auto batch: Starting new session for $remaining vehicles");
+            } else {
+                error_log("[NHTSA Cron] Auto batch: No vehicles to process");
+                return;
+            }
+        }
+
+        // Use reflection to call private method
+        $reflection = new \ReflectionClass('SafeQuote_NHTSA_Admin_Page');
+        $method = $reflection->getMethod('batch_fill_missing_ratings');
+        $method->setAccessible(true);
+
+        // Continue existing batch if session exists, otherwise start new
+        $start_new = !$session;
+        $result = $method->invoke(null, $start_new);
+
+        if ($result['success']) {
+            error_log("[NHTSA Cron] Auto batch: Processed {$result['processed']}, Updated {$result['updated']}, Status: {$result['status']}");
+        } else {
+            error_log("[NHTSA Cron] Auto batch failed: {$result['reason']}");
+        }
     }
 
     /**
@@ -236,6 +317,45 @@ class SafeQuote_NHTSA_Init {
     }
 
     /**
+     * Disable all NHTSA cron tasks
+     *
+     * Called from admin page to manually disable automated background tasks.
+     * Does not delete scheduled events permanently, just unschedules them
+     * so they won't run until enable_all_crons() is called.
+     *
+     * @return void
+     */
+    public static function disable_all_crons() {
+        wp_clear_scheduled_hook('safequote_nhtsa_csv_sync');
+        wp_clear_scheduled_hook('safequote_nhtsa_validate');
+        wp_clear_scheduled_hook('safequote_nhtsa_cleanup');
+        wp_clear_scheduled_hook('safequote_nhtsa_auto_batch_fill');
+
+        error_log('[NHTSA Init] All cron tasks disabled via admin panel');
+    }
+
+    /**
+     * Enable all NHTSA cron tasks
+     *
+     * Called from admin page to re-enable automated background tasks.
+     * Re-schedules all cron jobs that were previously disabled.
+     *
+     * @return void
+     */
+    public static function enable_all_crons() {
+        // Remove any existing schedules first (in case they're stuck)
+        wp_clear_scheduled_hook('safequote_nhtsa_csv_sync');
+        wp_clear_scheduled_hook('safequote_nhtsa_validate');
+        wp_clear_scheduled_hook('safequote_nhtsa_cleanup');
+        wp_clear_scheduled_hook('safequote_nhtsa_auto_batch_fill');
+
+        // Re-schedule all crons
+        self::schedule_crons();
+
+        error_log('[NHTSA Init] All cron tasks enabled via admin panel');
+    }
+
+    /**
      * Cleanup on theme deactivation
      *
      * @return void
@@ -245,6 +365,7 @@ class SafeQuote_NHTSA_Init {
         wp_clear_scheduled_hook('safequote_nhtsa_csv_sync');
         wp_clear_scheduled_hook('safequote_nhtsa_validate');
         wp_clear_scheduled_hook('safequote_nhtsa_cleanup');
+        wp_clear_scheduled_hook('safequote_nhtsa_auto_batch_fill');
 
         // Cleanup CSV import temporary files
         require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-csv-import.php';
@@ -258,6 +379,21 @@ class SafeQuote_NHTSA_Init {
 add_action('safequote_nhtsa_csv_sync', array('SafeQuote_NHTSA_Init', 'cron_csv_sync'));
 add_action('safequote_nhtsa_validate', array('SafeQuote_NHTSA_Init', 'cron_validate'));
 add_action('safequote_nhtsa_cleanup', array('SafeQuote_NHTSA_Init', 'cron_cleanup'));
+add_action('safequote_nhtsa_auto_batch_fill', array('SafeQuote_NHTSA_Init', 'cron_auto_batch_fill'));
 
-// Initialize on theme setup
+// Add custom 3-minute cron interval
+add_filter('cron_schedules', function ($schedules) {
+    if (!isset($schedules['three_minutes'])) {
+        $schedules['three_minutes'] = array(
+            'interval' => 180, // 3 minutes in seconds
+            'display'  => __('Every 3 minutes', 'safequote-traditional'),
+        );
+    }
+    return $schedules;
+});
+
+// Initialize on theme activation (setup database)
+add_action('after_switch_theme', array('SafeQuote_NHTSA_Init', 'activate'));
+
+// Initialize on theme setup (schedule crons and enqueue assets)
 add_action('after_setup_theme', array('SafeQuote_NHTSA_Init', 'init'));

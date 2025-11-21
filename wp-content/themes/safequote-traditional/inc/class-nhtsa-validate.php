@@ -23,14 +23,12 @@ class SafeQuote_NHTSA_Validate {
      */
     public static function validate_sync() {
         $sync_stats = SafeQuote_NHTSA_Database::get_sync_stats();
-        $fetch_stats = SafeQuote_NHTSA_Fetch::get_fetch_stats();
         $cache_stats = SafeQuote_NHTSA_Cache::get_cache_stats();
 
         $report = array(
             'timestamp' => current_time('mysql'),
             'status' => 'completed',
             'sync' => $sync_stats,
-            'fetch' => $fetch_stats,
             'cache' => $cache_stats,
             'alerts' => array(),
         );
