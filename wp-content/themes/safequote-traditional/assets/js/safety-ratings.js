@@ -30,7 +30,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /**
-     * Fetch safety ratings from NHTSA API
+     * Fetch safety ratings from WordPress AJAX endpoint
+     * Uses server-side multi-tier caching (transient → database → API → stale fallback)
      */
     async function fetchSafetyRatings() {
         const year = yearInput.value.trim();
@@ -48,32 +49,16 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsContainer.classList.add('hidden');
 
         try {
-            // First API call: Get basic vehicle info and ratings
-            const modelYearData = await fetchModelYearRatings(year, make, model);
+            // Call WordPress AJAX endpoint with multi-tier caching
+            const vehicle = await fetchRatingFromAjax(year, make, model);
 
-            if (!modelYearData || modelYearData.Results.length === 0) {
+            if (!vehicle || !vehicle.OverallRating) {
                 showError(`No safety ratings found for ${year} ${make} ${model}`);
                 setLoading(false);
                 return;
             }
 
-            // Get the first matching vehicle
-            let vehicle = modelYearData.Results[0];
-
-            // Second API call: Get detailed ratings using VehicleId
-            if (vehicle.VehicleId) {
-                try {
-                    const detailedRatings = await fetchDetailedRatings(vehicle.VehicleId);
-                    if (detailedRatings) {
-                        // Merge detailed data with original vehicle data
-                        vehicle = { ...vehicle, ...detailedRatings };
-                    }
-                } catch (err) {
-                    console.warn('Could not fetch detailed ratings, using basic data:', err);
-                }
-            }
-
-            // Render results
+            // Render results with cached data
             renderResults(vehicle);
             setLoading(false);
         } catch (error) {
@@ -84,41 +69,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /**
-     * Fetch model year ratings from NHTSA API
+     * Fetch vehicle rating from WordPress AJAX endpoint
+     *
+     * Uses the server-side multi-tier cache through WordPress transients,
+     * database table, and live NHTSA API.
+     *
+     * @param {number} year  Vehicle year
+     * @param {string} make  Vehicle make
+     * @param {string} model Vehicle model
+     * @return {Promise}     Promise resolving to rating data
      */
-    async function fetchModelYearRatings(year, make, model) {
+    async function fetchRatingFromAjax(year, make, model) {
         try {
-            const encodedMake = encodeURIComponent(make);
-            const encodedModel = encodeURIComponent(model);
-            const url = `https://api.nhtsa.gov/SafetyRatings/modelyear/${year}/make/${encodedMake}/model/${encodedModel}`;
+            // Build AJAX URL with parameters
+            const url = new URL(safequote_ajax.ajax_url, window.location.origin);
+            url.searchParams.set('action', 'get_nhtsa_rating');
+            url.searchParams.set('year', year);
+            url.searchParams.set('make', make);
+            url.searchParams.set('model', model);
+            url.searchParams.set('nonce', safequote_ajax.nonce);
 
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('API request failed');
-
-            return await response.json();
-        } catch (error) {
-            throw new Error('Failed to fetch model year ratings: ' + error.message);
-        }
-    }
-
-    /**
-     * Fetch detailed ratings for a specific vehicle using VehicleId
-     */
-    async function fetchDetailedRatings(vehicleId) {
-        try {
-            const url = `https://api.nhtsa.gov/SafetyRatings/VehicleId/${vehicleId}?format=json`;
-
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('API request failed');
+            const response = await fetch(url.toString());
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
             const data = await response.json();
-            if (data.Count > 0 && data.Results && data.Results.length > 0) {
-                return data.Results[0];
+
+            // WordPress AJAX returns { success: true/false, data: ... }
+            if (data.success && data.data) {
+                return data.data;
             }
             return null;
         } catch (error) {
-            console.warn('Could not fetch detailed ratings:', error);
-            return null;
+            console.error(`AJAX error for ${year} ${make} ${model}:`, error);
+            throw error;
         }
     }
 

@@ -386,8 +386,15 @@ add_action('wp_ajax_nopriv_get_models', 'safequote_ajax_get_models');
  * Get NHTSA rating for vehicle AJAX handler
  */
 function safequote_ajax_get_nhtsa_rating() {
-    // Verify nonce
-    if (!isset($_GET['nonce']) || !wp_verify_nonce($_GET['nonce'], 'safequote_top_picks_nonce')) {
+    // Verify nonce (accepts both safequote_ajax_nonce and safequote_top_picks_nonce for backward compatibility)
+    if (!isset($_GET['nonce'])) {
+        wp_send_json_error('Security check failed');
+    }
+
+    $nonce_valid = wp_verify_nonce($_GET['nonce'], 'safequote_ajax_nonce') ||
+                   wp_verify_nonce($_GET['nonce'], 'safequote_top_picks_nonce');
+
+    if (!$nonce_valid) {
         wp_send_json_error('Security check failed');
     }
 
@@ -403,10 +410,10 @@ function safequote_ajax_get_nhtsa_rating() {
     require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-cache.php';
     $rating_data = SafeQuote_NHTSA_Cache::get_vehicle_rating($year, $make, $model);
 
-    if ($rating_data && isset($rating_data['overall_rating'])) {
+    if ($rating_data && isset($rating_data['OverallRating'])) {
         wp_send_json_success($rating_data);
     } else {
-        wp_send_json_success(array('overall_rating' => null));
+        wp_send_json_success(array('OverallRating' => null));
     }
 }
 add_action('wp_ajax_get_nhtsa_rating', 'safequote_ajax_get_nhtsa_rating');

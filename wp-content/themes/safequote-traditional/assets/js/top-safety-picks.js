@@ -86,9 +86,9 @@
     // Fetch from server (which uses our multi-tier cache)
     fetchRating(vehicle.year, vehicle.make, vehicle.model)
       .then((rating) => {
-        if (rating && rating.overall_rating) {
+        if (rating && rating.OverallRating) {
           // Display star rating
-          displayStarRating(ratingContainer, rating.overall_rating);
+          displayStarRating(ratingContainer, rating.OverallRating);
 
           // Show NHTSA badge
           if (badgeContainer) {
@@ -96,7 +96,7 @@
           }
 
           console.log(
-            `[Top Safety Picks] ✓ ${vehicle.year} ${vehicle.make} ${vehicle.model}: ${rating.overall_rating}/5.0`
+            `[Top Safety Picks] ✓ ${vehicle.year} ${vehicle.make} ${vehicle.model}: ${rating.OverallRating}/5.0`
           );
         } else {
           // No NHTSA rating available

@@ -376,12 +376,56 @@ class SafeQuote_NHTSA_CSV_Import {
             $overall_rating = floatval($rating_value);
         }
 
-        // Build NHTSA data object (rating can be null - API will fill)
+        // Extract individual crash ratings
+        $front_crash = isset($row[$column_map['front_crash']]) && preg_match('/^[1-5](?:\.\d+)?$/', trim($row[$column_map['front_crash']])) ? floatval($row[$column_map['front_crash']]) : null;
+        $side_crash = isset($row[$column_map['side_crash']]) && preg_match('/^[1-5](?:\.\d+)?$/', trim($row[$column_map['side_crash']])) ? floatval($row[$column_map['side_crash']]) : null;
+        $rollover_crash = isset($row[$column_map['rollover_crash']]) && preg_match('/^[1-5](?:\.\d+)?$/', trim($row[$column_map['rollover_crash']])) ? floatval($row[$column_map['rollover_crash']]) : null;
+
+        // Build NHTSA data object matching API response format
+        // Uses PascalCase field names to match parse_nhtsa_response() format
         $nhtsa_data = array(
-            'overall_rating' => $overall_rating,
-            'front_crash' => isset($row[$column_map['front_crash']]) && preg_match('/^[1-5](?:\.\d+)?$/', trim($row[$column_map['front_crash']])) ? floatval($row[$column_map['front_crash']]) : null,
-            'side_crash' => isset($row[$column_map['side_crash']]) && preg_match('/^[1-5](?:\.\d+)?$/', trim($row[$column_map['side_crash']])) ? floatval($row[$column_map['side_crash']]) : null,
-            'rollover_crash' => isset($row[$column_map['rollover_crash']]) && preg_match('/^[1-5](?:\.\d+)?$/', trim($row[$column_map['rollover_crash']])) ? floatval($row[$column_map['rollover_crash']]) : null,
+            // Vehicle identification
+            'VehicleId' => null,
+            'VehicleDescription' => "{$year} {$make} {$model}",
+            'ModelYear' => $year,
+            'Make' => $make,
+            'Model' => $model,
+            'VehiclePicture' => null,
+
+            // Overall ratings (from CSV)
+            'OverallRating' => $overall_rating,
+            'OverallFrontCrashRating' => $front_crash,
+            'OverallSideCrashRating' => $side_crash,
+            'RolloverRating' => $rollover_crash,
+
+            // Detailed crash ratings - not in CSV, set to null (API will fill if available)
+            'FrontCrashDriversideRating' => null,
+            'FrontCrashPassengersideRating' => null,
+            'SideCrashDriversideRating' => null,
+            'SideCrashPassengersideRating' => null,
+            'SidePoleCrashRating' => null,
+
+            // Rollover details - not in CSV
+            'RolloverRating2' => null,
+            'RolloverPossibility' => null,
+            'RolloverPossibility2' => null,
+            'dynamicTipResult' => null,
+
+            // Side barrier ratings - not in CSV
+            'combinedSideBarrierAndPoleRating-Front' => null,
+            'combinedSideBarrierAndPoleRating-Rear' => null,
+
+            // Safety features - not in CSV
+            'NHTSAElectronicStabilityControl' => null,
+            'NHTSAForwardCollisionWarning' => null,
+            'NHTSALaneDepartureWarning' => null,
+
+            // Complaints, recalls, investigations - not in CSV
+            'ComplaintsCount' => 0,
+            'RecallsCount' => 0,
+            'InvestigationCount' => 0,
+
+            // Metadata
             'source' => 'csv_import',
         );
 
@@ -416,13 +460,43 @@ class SafeQuote_NHTSA_CSV_Import {
     }
 
     /**
-     * Force reimport of CSV
+     * Force reimport of CSV (with cleanup of old data)
+     *
+     * Clears old CSV-imported records before syncing new data to ensure
+     * all records use the updated data format with PascalCase field names.
      *
      * @return array Result.
      */
     public static function force_reimport() {
+        // Clear old CSV data before reimporting with new format
+        self::clear_old_csv_data();
         delete_transient(self::REMOTE_HEADERS_CACHE);
         return self::sync_csv_data();
+    }
+
+    /**
+     * Clear old CSV-imported records from database
+     *
+     * Removes all existing CSV-imported records so they can be reimported
+     * with the updated data format (PascalCase field names).
+     * API-imported records are NOT deleted.
+     *
+     * @return int Number of records deleted.
+     */
+    public static function clear_old_csv_data() {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'nhtsa_vehicle_cache';
+
+        // Delete all CSV-imported records (API records are preserved)
+        $deleted = $wpdb->query("DELETE FROM $table WHERE rating_source = 'csv_import' OR rating_source = 'csv'");
+
+        // Clear related transients
+        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '%nhtsa_rating_%'");
+
+        error_log("[NHTSA CSV] Cleared $deleted old CSV records and transients before reimport");
+
+        return $deleted;
     }
 
     /**

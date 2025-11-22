@@ -248,8 +248,8 @@ class SafeQuote_NHTSA_Database {
         $table = $wpdb->prefix . 'nhtsa_vehicle_cache';
         $existing = self::get_vehicle_cache($year, $make, $model);
 
-        // Extract rating from nhtsa_data
-        $new_rating = isset($nhtsa_data['overall_rating']) ? floatval($nhtsa_data['overall_rating']) : null;
+        // Extract rating from nhtsa_data using PascalCase field names
+        $new_rating = isset($nhtsa_data['OverallRating']) ? floatval($nhtsa_data['OverallRating']) : null;
 
         // Smart merge logic: Don't overwrite API data with CSV null/empty
         if ($existing && $source === 'csv' && $new_rating === null && $existing->rating_source === 'api') {
@@ -265,10 +265,10 @@ class SafeQuote_NHTSA_Database {
             'make' => sanitize_text_field($make),
             'model' => sanitize_text_field($model),
             'nhtsa_overall_rating' => $new_rating,
-            'front_crash' => isset($nhtsa_data['front_crash']) ? floatval($nhtsa_data['front_crash']) : null,
-            'side_crash' => isset($nhtsa_data['side_crash']) ? floatval($nhtsa_data['side_crash']) : null,
-            'rollover_crash' => isset($nhtsa_data['rollover_crash']) ? floatval($nhtsa_data['rollover_crash']) : null,
-            'vehicle_picture' => isset($nhtsa_data['vehicle_picture']) ? sanitize_url($nhtsa_data['vehicle_picture']) : null,
+            'front_crash' => isset($nhtsa_data['OverallFrontCrashRating']) ? floatval($nhtsa_data['OverallFrontCrashRating']) : null,
+            'side_crash' => isset($nhtsa_data['OverallSideCrashRating']) ? floatval($nhtsa_data['OverallSideCrashRating']) : null,
+            'rollover_crash' => isset($nhtsa_data['RolloverRating']) ? floatval($nhtsa_data['RolloverRating']) : null,
+            'vehicle_picture' => isset($nhtsa_data['VehiclePicture']) ? sanitize_url($nhtsa_data['VehiclePicture']) : null,
             'nhtsa_data' => json_encode($nhtsa_data),
             'rating_source' => sanitize_text_field($source),
             'expires_at' => $expires_at,
