@@ -61,20 +61,30 @@ class SafeQuote_NHTSA_Init {
      * Create or repair database tables
      *
      * Public method that can be called from admin page or theme activation.
-     * Safe to call multiple times - uses one-time initialization flag.
+     * Safe to call multiple times - checks if tables exist before creating.
+     * If tables were dropped, this will recreate them.
      *
      * @return void
      */
     public static function create_database_tables() {
-        // Check if already initialized
-        if (get_option('safequote_nhtsa_db_initialized')) {
-            return;
+        global $wpdb;
+
+        // Check if tables actually exist (more reliable than WordPress option)
+        $table_vehicle_cache = $wpdb->prefix . 'nhtsa_vehicle_cache';
+        $table_sync_log = $wpdb->prefix . 'nhtsa_sync_log';
+
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_vehicle_cache'") === $table_vehicle_cache;
+
+        // Only create if tables don't exist
+        if (!$table_exists) {
+            require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-database.php';
+            SafeQuote_NHTSA_Database::create_tables();
+            error_log('[NHTSA Init] Database tables created/restored');
+        } else {
+            error_log('[NHTSA Init] Database tables already exist');
         }
 
-        require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-database.php';
-        SafeQuote_NHTSA_Database::create_tables();
-
-        // Mark as initialized
+        // Mark as initialized for reference
         update_option('safequote_nhtsa_db_initialized', current_time('mysql'));
     }
 
