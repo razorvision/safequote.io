@@ -339,28 +339,36 @@
     }
 
     /**
-     * Load makes from NHTSA API
+     * Load makes from WordPress AJAX endpoint
      */
     async function loadMakes(year) {
-        if (!safequote_ajax?.api_endpoints?.nhtsa) return;
+        if (!safequote_ajax?.ajax_url || !safequote_ajax?.nonce) return;
 
         showLoading(true);
 
         try {
-            const response = await fetch(`${safequote_ajax.api_endpoints.nhtsa}/${year}/make?format=json`);
+            const params = new URLSearchParams({
+                action: 'get_makes',
+                year: year,
+                nonce: safequote_ajax.nonce
+            });
+
+            const response = await fetch(`${safequote_ajax.ajax_url}?${params.toString()}`);
             const data = await response.json();
 
-            if (data.Results && elements.makeSelect) {
+            if (data.success && data.data && elements.makeSelect) {
                 elements.makeSelect.innerHTML = '<option value="">Select Make</option>';
 
-                data.Results.forEach(make => {
+                data.data.forEach(make => {
                     const option = document.createElement('option');
-                    option.value = make.Make;
-                    option.textContent = make.Make;
+                    option.value = make.name;
+                    option.textContent = make.name;
                     elements.makeSelect.appendChild(option);
                 });
 
                 elements.makeSelect.disabled = false;
+            } else {
+                showNotification('Failed to load makes. Please try again.', 'error');
             }
         } catch (error) {
             console.error('Error loading makes:', error);
@@ -371,28 +379,37 @@
     }
 
     /**
-     * Load models from NHTSA API
+     * Load models from WordPress AJAX endpoint
      */
     async function loadModels(year, make) {
-        if (!safequote_ajax?.api_endpoints?.nhtsa) return;
+        if (!safequote_ajax?.ajax_url || !safequote_ajax?.nonce) return;
 
         showLoading(true);
 
         try {
-            const response = await fetch(`${safequote_ajax.api_endpoints.nhtsa}/${year}/make/${make}/model?format=json`);
+            const params = new URLSearchParams({
+                action: 'get_models',
+                year: year,
+                make: make,
+                nonce: safequote_ajax.nonce
+            });
+
+            const response = await fetch(`${safequote_ajax.ajax_url}?${params.toString()}`);
             const data = await response.json();
 
-            if (data.Results && elements.modelSelect) {
+            if (data.success && data.data && elements.modelSelect) {
                 elements.modelSelect.innerHTML = '<option value="">Select Model</option>';
 
-                data.Results.forEach(model => {
+                data.data.forEach(model => {
                     const option = document.createElement('option');
-                    option.value = model.Model;
-                    option.textContent = model.Model;
+                    option.value = model.name;
+                    option.textContent = model.name;
                     elements.modelSelect.appendChild(option);
                 });
 
                 elements.modelSelect.disabled = false;
+            } else {
+                showNotification('Failed to load models. Please try again.', 'error');
             }
         } catch (error) {
             console.error('Error loading models:', error);
