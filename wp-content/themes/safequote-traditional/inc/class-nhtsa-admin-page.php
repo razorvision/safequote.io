@@ -137,6 +137,38 @@ class SafeQuote_NHTSA_Admin_Page {
             wp_die(__('Unauthorized', 'safequote-traditional'));
         }
 
+        // Handle Force Reimport trigger (with database cleanup)
+        if (isset($_POST['safequote_nhtsa_force_reimport'])) {
+            require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-csv-import.php';
+
+            // Force reimport will automatically clean old CSV data and force fresh download
+            $result = SafeQuote_NHTSA_CSV_Import::force_reimport();
+
+            if ($result['status'] === 'success') {
+                add_settings_error(
+                    'safequote_nhtsa',
+                    'force_reimport_success',
+                    sprintf(
+                        __('✓ Force reimport successful! Cleaned old records and imported: %d vehicles with new PascalCase format', 'safequote-traditional'),
+                        $result['imported']
+                    ),
+                    'success'
+                );
+            } else {
+                add_settings_error(
+                    'safequote_nhtsa',
+                    'force_reimport_error',
+                    sprintf(
+                        __('⚠ Force reimport failed: %s (reason: %s). Check WordPress debug log for details.', 'safequote-traditional'),
+                        $result['error'] ?? 'Unknown error',
+                        $result['reason'] ?? 'unknown'
+                    ),
+                    'error'
+                );
+                error_log('[NHTSA Admin] Force reimport result: ' . json_encode($result));
+            }
+        }
+
         // Handle CSV sync trigger
         if (isset($_POST['safequote_nhtsa_sync'])) {
             require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-csv-import.php';
@@ -765,6 +797,12 @@ class SafeQuote_NHTSA_Admin_Page {
                                 <button type="submit" name="safequote_nhtsa_sync" class="button button-primary">
                                     <?php esc_html_e('Sync Now', 'safequote-traditional'); ?>
                                 </button>
+                                <button type="submit" name="safequote_nhtsa_force_reimport" class="button button-secondary" style="margin-left: 10px;">
+                                    <?php esc_html_e('Force Reimport (Clear & Reload)', 'safequote-traditional'); ?>
+                                </button>
+                                <p class="description" style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                                    <?php esc_html_e('Force Reimport will delete all existing CSV records and reimport with the latest format. Use this if you need to update the data structure.', 'safequote-traditional'); ?>
+                                </p>
                             </div>
 
                             <!-- Batch Fill Missing Ratings -->
@@ -836,7 +874,7 @@ class SafeQuote_NHTSA_Admin_Page {
                                     </label>
                                     <select name="safequote_nhtsa_target_year" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 150px;">
                                         <option value="">-- Select Year --</option>
-                                        <?php for ($y = 2026; $y >= 2015; $y--) : ?>
+                                        <?php for ($y = date('Y') + 1; $y >= 2015; $y--) : ?>
                                             <option value="<?php echo esc_attr($y); ?>">
                                                 <?php echo esc_html($y);
                                                 if ($y == 2025 || $y == 2024) {
@@ -1191,10 +1229,11 @@ class SafeQuote_NHTSA_Admin_Page {
         }
 
         // Get next batch of vehicles (excluding already-processed IDs)
+        // Order by year DESC to process newest vehicles first (2025, 2024, 2023...)
         $exclude_ids = !empty($processed_ids) ? implode(',', $processed_ids) : '0';
         $vehicles = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT id, year, make, model FROM $table WHERE (nhtsa_overall_rating IS NULL OR vehicle_picture IS NULL) AND id NOT IN ($exclude_ids) LIMIT %d",
+                "SELECT id, year, make, model FROM $table WHERE (nhtsa_overall_rating IS NULL OR vehicle_picture IS NULL) AND id NOT IN ($exclude_ids) ORDER BY year DESC, make ASC, model ASC LIMIT %d",
                 $batch_size
             )
         );
@@ -1442,9 +1481,10 @@ class SafeQuote_NHTSA_Admin_Page {
         }
 
         // Get next batch of vehicles (excluding already-processed IDs)
+        // Order alphabetically by make and model for consistent processing
         $exclude_ids = !empty($processed_ids) ? implode(',', $processed_ids) : '0';
         $vehicles = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, year, make, model FROM $table WHERE (nhtsa_overall_rating IS NULL OR vehicle_picture IS NULL) AND year = %d AND id NOT IN ($exclude_ids) LIMIT %d",
+            "SELECT id, year, make, model FROM $table WHERE (nhtsa_overall_rating IS NULL OR vehicle_picture IS NULL) AND year = %d AND id NOT IN ($exclude_ids) ORDER BY make ASC, model ASC LIMIT %d",
             $year,
             $batch_size
         ));

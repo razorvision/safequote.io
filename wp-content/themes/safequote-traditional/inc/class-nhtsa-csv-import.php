@@ -465,12 +465,19 @@ class SafeQuote_NHTSA_CSV_Import {
      * Clears old CSV-imported records before syncing new data to ensure
      * all records use the updated data format with PascalCase field names.
      *
+     * Bypasses the "file already current" check to force a complete reimport.
+     *
      * @return array Result.
      */
     public static function force_reimport() {
         // Clear old CSV data before reimporting with new format
         self::clear_old_csv_data();
+
+        // Clear the last import time to force reimport even if file hasn't changed
+        delete_option(self::LAST_IMPORT_OPTION);
         delete_transient(self::REMOTE_HEADERS_CACHE);
+
+        // Now sync will always reimport since we cleared the last import timestamp
         return self::sync_csv_data();
     }
 
