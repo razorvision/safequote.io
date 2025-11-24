@@ -2,24 +2,26 @@
 /**
  * Template part: Search Filters
  *
- * Displays vehicle search filters with condition, type, safety rating, and price range
+ * Displays vehicle search filters with year, make, model, condition, type, and safety rating
  *
  * @package SafeQuote_Traditional
  * @since 1.0.0
  *
  * @param array $filters {
+ *     @type string $year              Vehicle year filter
+ *     @type string $make              Vehicle make filter
+ *     @type string $model             Vehicle model filter
  *     @type string $condition         Current condition filter (all|new|preowned)
  *     @type string $vehicleType       Current vehicle type filter
  *     @type int    $minSafetyRating   Minimum safety rating (0-5)
- *     @type int    $maxPrice          Maximum price filter
  * }
  */
 
 $filters = isset( $filters ) ? $filters : array(
-	'condition'        => 'all',
-	'vehicleType'      => 'all',
+	'year'             => '',
+	'make'             => '',
+	'model'            => '',
 	'minSafetyRating'  => 0,
-	'maxPrice'         => 50000,
 );
 ?>
 
@@ -35,45 +37,39 @@ $filters = isset( $filters ) ? $filters : array(
 	</div>
 
 	<!-- Filters Grid -->
-	<form id="vehicle-filters-form" class="grid md:grid-cols-4 gap-6">
-		<!-- Condition Filter -->
+	<form id="vehicle-filters-form" class="grid md:grid-cols-2 lg:grid-cols-2 gap-6">
+		<!-- Year Filter -->
 		<div class="space-y-2">
-			<label for="filter-condition" class="form-label">
-				<?php esc_html_e( 'Condition', 'safequote-traditional' ); ?>
+			<label for="filter-year" class="form-label">
+				<?php esc_html_e( 'Year', 'safequote-traditional' ); ?>
 			</label>
-			<select id="filter-condition" name="condition" class="form-select" data-filter="condition">
-				<option value="all" <?php selected( $filters['condition'], 'all' ); ?>>
-					<?php esc_html_e( 'All Vehicles', 'safequote-traditional' ); ?>
-				</option>
-				<option value="new" <?php selected( $filters['condition'], 'new' ); ?>>
-					<?php esc_html_e( 'New Only', 'safequote-traditional' ); ?>
-				</option>
-				<option value="preowned" <?php selected( $filters['condition'], 'preowned' ); ?>>
-					<?php esc_html_e( 'Preowned Only', 'safequote-traditional' ); ?>
+			<select id="filter-year" name="year" class="form-select" data-filter="year">
+				<option value="">
+					<?php esc_html_e( 'All Years', 'safequote-traditional' ); ?>
 				</option>
 			</select>
 		</div>
 
-		<!-- Vehicle Type Filter -->
+		<!-- Make Filter -->
 		<div class="space-y-2">
-			<label for="filter-type" class="form-label">
-				<?php esc_html_e( 'Vehicle Type', 'safequote-traditional' ); ?>
+			<label for="filter-make" class="form-label">
+				<?php esc_html_e( 'Make', 'safequote-traditional' ); ?>
 			</label>
-			<select id="filter-type" name="vehicleType" class="form-select" data-filter="vehicleType">
-				<option value="all" <?php selected( $filters['vehicleType'], 'all' ); ?>>
-					<?php esc_html_e( 'All Types', 'safequote-traditional' ); ?>
+			<select id="filter-make" name="make" class="form-select" data-filter="make" disabled>
+				<option value="">
+					<?php esc_html_e( 'Select Make', 'safequote-traditional' ); ?>
 				</option>
-				<option value="sedan" <?php selected( $filters['vehicleType'], 'sedan' ); ?>>
-					<?php esc_html_e( 'Sedan', 'safequote-traditional' ); ?>
-				</option>
-				<option value="suv" <?php selected( $filters['vehicleType'], 'suv' ); ?>>
-					<?php esc_html_e( 'SUV', 'safequote-traditional' ); ?>
-				</option>
-				<option value="hatchback" <?php selected( $filters['vehicleType'], 'hatchback' ); ?>>
-					<?php esc_html_e( 'Hatchback', 'safequote-traditional' ); ?>
-				</option>
-				<option value="truck" <?php selected( $filters['vehicleType'], 'truck' ); ?>>
-					<?php esc_html_e( 'Truck', 'safequote-traditional' ); ?>
+			</select>
+		</div>
+
+		<!-- Model Filter -->
+		<div class="space-y-2">
+			<label for="filter-model" class="form-label">
+				<?php esc_html_e( 'Model', 'safequote-traditional' ); ?>
+			</label>
+			<select id="filter-model" name="model" class="form-select" data-filter="model" disabled>
+				<option value="">
+					<?php esc_html_e( 'Select Model', 'safequote-traditional' ); ?>
 				</option>
 			</select>
 		</div>
@@ -99,34 +95,15 @@ $filters = isset( $filters ) ? $filters : array(
 				data-display="safety-rating-value"
 			/>
 		</div>
-
-		<!-- Maximum Price Slider -->
-		<div class="space-y-3">
-			<label for="filter-max-price" class="form-label">
-				<?php esc_html_e( 'Max Price:', 'safequote-traditional' ); ?>
-				<span id="max-price-value" class="font-semibold">
-					$<?php echo esc_html( number_format( $filters['maxPrice'] ) ); ?>
-				</span>
-			</label>
-			<input
-				id="filter-max-price"
-				type="range"
-				name="maxPrice"
-				min="10000"
-				max="50000"
-				step="1000"
-				value="<?php echo esc_attr( $filters['maxPrice'] ); ?>"
-				class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-primary"
-				data-filter="maxPrice"
-				data-display="max-price-value"
-			/>
-		</div>
 	</form>
 
-	<!-- Reset Filters Button -->
-	<div class="mt-6 pt-6 border-t border-gray-200">
+	<!-- Action Buttons -->
+	<div class="mt-6 pt-6 border-t border-gray-200 flex gap-3">
+		<button id="search-vehicles-btn" class="btn btn-primary flex-1">
+			<?php esc_html_e( 'Search Vehicles', 'safequote-traditional' ); ?>
+		</button>
 		<button id="reset-filters" class="btn btn-outline">
-			<?php esc_html_e( 'Reset Filters', 'safequote-traditional' ); ?>
+			<?php esc_html_e( 'Reset', 'safequote-traditional' ); ?>
 		</button>
 	</div>
 </div>
@@ -134,54 +111,198 @@ $filters = isset( $filters ) ? $filters : array(
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 	const filterForm = document.getElementById('vehicle-filters-form');
+	const yearSelect = document.getElementById('filter-year');
+	const makeSelect = document.getElementById('filter-make');
+	const modelSelect = document.getElementById('filter-model');
 	const safetyRatingInput = document.getElementById('filter-safety-rating');
-	const maxPriceInput = document.getElementById('filter-max-price');
 	const resetButton = document.getElementById('reset-filters');
 
-	// Update display values for sliders
+	// Load available years on page load
+	if (yearSelect && window.safequote_ajax?.nonce) {
+		loadYears();
+	}
+
+	// Year change handler
+	yearSelect?.addEventListener('change', function() {
+		// Reset make and model when year changes
+		makeSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Make', 'safequote-traditional' ); ?></option>';
+		makeSelect.disabled = !this.value;
+		modelSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Model', 'safequote-traditional' ); ?></option>';
+		modelSelect.disabled = true;
+
+		if (this.value) {
+			loadMakes(this.value);
+		}
+		// Don't auto-search, wait for Search button click
+	});
+
+	// Make change handler
+	makeSelect?.addEventListener('change', function() {
+		const year = yearSelect.value;
+		// Reset model when make changes
+		modelSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Model', 'safequote-traditional' ); ?></option>';
+		modelSelect.disabled = !this.value;
+
+		if (this.value && year) {
+			loadModels(year, this.value);
+		}
+		// Don't auto-search, wait for Search button click
+	});
+
+	// Model change handler (just update state, don't auto-search)
+	modelSelect?.addEventListener('change', function() {
+		// Selection updated, ready for manual search button click
+	});
+
+	// Update display value for safety rating slider (no auto-search, wait for button)
 	safetyRatingInput?.addEventListener('input', function() {
 		const display = document.getElementById('safety-rating-value');
 		if (display) display.textContent = this.value + '/5';
-		triggerFilter();
 	});
 
-	maxPriceInput?.addEventListener('input', function() {
-		const display = document.getElementById('max-price-value');
-		if (display) display.textContent = '$' + parseInt(this.value).toLocaleString();
+	// Search button handler
+	const searchBtn = document.getElementById('search-vehicles-btn');
+	searchBtn?.addEventListener('click', function(e) {
+		e.preventDefault();
 		triggerFilter();
-	});
-
-	// Filter on select change
-	filterForm?.querySelectorAll('select').forEach(select => {
-		select.addEventListener('change', triggerFilter);
 	});
 
 	// Reset filters
 	resetButton?.addEventListener('click', function(e) {
 		e.preventDefault();
 		filterForm?.reset();
+		makeSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Make', 'safequote-traditional' ); ?></option>';
+		makeSelect.disabled = true;
+		modelSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Model', 'safequote-traditional' ); ?></option>';
+		modelSelect.disabled = true;
 		if (safetyRatingInput) {
 			safetyRatingInput.value = 0;
 			document.getElementById('safety-rating-value').textContent = '0/5';
 		}
-		if (maxPriceInput) {
-			maxPriceInput.value = 50000;
-			document.getElementById('max-price-value').textContent = '$50,000';
-		}
 		triggerFilter();
 	});
 
-	function triggerFilter() {
-		// Dispatch custom event for filter changes
-		const filterChangeEvent = new CustomEvent('vehicleFiltersChanged', {
-			detail: {
-				condition: document.getElementById('filter-condition').value,
-				vehicleType: document.getElementById('filter-type').value,
-				minSafetyRating: parseInt(safetyRatingInput.value),
-				maxPrice: parseInt(maxPriceInput.value),
-			}
+	function loadYears() {
+		const params = new URLSearchParams({
+			action: 'get_years',
+			nonce: window.safequote_ajax.nonce
 		});
-		document.dispatchEvent(filterChangeEvent);
+
+		fetch(`${window.safequote_ajax.ajax_url}?${params.toString()}`)
+			.then(res => res.json())
+			.then(data => {
+				if (data.success && data.data) {
+					data.data.forEach(year => {
+						const option = document.createElement('option');
+						option.value = year.name;
+						option.textContent = year.name;
+						yearSelect.appendChild(option);
+					});
+				}
+			})
+			.catch(err => console.error('Error loading years:', err));
+	}
+
+	function loadMakes(year) {
+		const params = new URLSearchParams({
+			action: 'get_makes',
+			year: year,
+			nonce: window.safequote_ajax.nonce
+		});
+
+		fetch(`${window.safequote_ajax.ajax_url}?${params.toString()}`)
+			.then(res => res.json())
+			.then(data => {
+				if (data.success && data.data) {
+					makeSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Make', 'safequote-traditional' ); ?></option>';
+					data.data.forEach(make => {
+						const option = document.createElement('option');
+						option.value = make.name;
+						option.textContent = make.name;
+						makeSelect.appendChild(option);
+					});
+					makeSelect.disabled = false;
+				}
+			})
+			.catch(err => console.error('Error loading makes:', err));
+	}
+
+	function loadModels(year, make) {
+		const params = new URLSearchParams({
+			action: 'get_models',
+			year: year,
+			make: make,
+			nonce: window.safequote_ajax.nonce
+		});
+
+		fetch(`${window.safequote_ajax.ajax_url}?${params.toString()}`)
+			.then(res => res.json())
+			.then(data => {
+				if (data.success && data.data) {
+					modelSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Model', 'safequote-traditional' ); ?></option>';
+					data.data.forEach(model => {
+						const option = document.createElement('option');
+						option.value = model.name;
+						option.textContent = model.name;
+						modelSelect.appendChild(option);
+					});
+					modelSelect.disabled = false;
+				}
+			})
+			.catch(err => console.error('Error loading models:', err));
+	}
+
+	function triggerFilter() {
+		const year = yearSelect.value;
+		const make = makeSelect.value;
+		const model = modelSelect.value;
+		const minSafetyRating = parseInt(safetyRatingInput.value);
+
+		// Require year and make to perform search
+		if (!year || !make) {
+			return;
+		}
+
+		// Build search parameters
+		const params = new URLSearchParams({
+			action: 'search_vehicles',
+			year: year,
+			make: make,
+			model: model,
+			minSafetyRating: minSafetyRating,
+			nonce: window.safequote_ajax.nonce
+		});
+
+		// Make AJAX request to search vehicles
+		fetch(window.safequote_ajax.ajax_url, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: params.toString()
+		})
+		.then(res => res.json())
+		.then(data => {
+			if (data.success && data.data?.vehicles) {
+				// Dispatch custom event for other listeners
+				const filterChangeEvent = new CustomEvent('vehicleFiltersChanged', {
+					detail: {
+						year: year,
+						make: make,
+						model: model,
+						minSafetyRating: minSafetyRating,
+						vehicles: data.data.vehicles
+					}
+				});
+				document.dispatchEvent(filterChangeEvent);
+
+				// Display vehicles if display function exists
+				if (window.SafeQuoteFilters?.displayVehicles) {
+					window.SafeQuoteFilters.displayVehicles(data.data.vehicles);
+				}
+			}
+		})
+		.catch(err => console.error('Error searching vehicles:', err));
 	}
 });
 </script>

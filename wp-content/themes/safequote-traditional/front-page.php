@@ -39,10 +39,10 @@ get_header();
                 <?php
                 // Include Search Filters template part
                 set_query_var('filters', array(
-                    'condition'       => 'all',
-                    'vehicleType'     => 'all',
-                    'minSafetyRating' => 0,
-                    'maxPrice'        => 50000,
+                    'year'             => '',
+                    'make'             => '',
+                    'model'            => '',
+                    'minSafetyRating'  => 0,
                 ));
                 get_template_part('template-parts/search-filters');
                 ?>
