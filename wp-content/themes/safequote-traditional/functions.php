@@ -191,15 +191,6 @@ function safequote_enqueue_scripts() {
         true
     );
 
-    // NHTSA API integration
-    wp_enqueue_script(
-        'safequote-nhtsa-api',
-        SAFEQUOTE_THEME_URI . '/assets/js/nhtsa-api.js',
-        array('safequote-main'),
-        SAFEQUOTE_THEME_VERSION,
-        true
-    );
-
     // Insurance comparison functionality
     wp_enqueue_script(
         'safequote-insurance',
