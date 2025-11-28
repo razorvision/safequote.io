@@ -51,12 +51,21 @@ $top_vehicles = isset( $vehicles ) && ! empty( $vehicles ) ? array_slice( $vehic
 						<span>NHTSA</span>
 					</span>
 				</div>
+				<?php
+				$pick_image = ! empty( $vehicle['vehicle_picture'] ) ? $vehicle['vehicle_picture'] : ( ! empty( $vehicle['image'] ) ? $vehicle['image'] : '' );
+				$pick_has_image = ! empty( $pick_image );
+			?>
+				<?php if ( $pick_has_image ) : ?>
 				<img
-					src="<?php echo esc_url( $vehicle['image'] ); ?>"
+					src="<?php echo esc_url( $pick_image ); ?>"
 					alt="<?php echo esc_attr( $vehicle['model'] ); ?>"
 					class="w-full h-20 object-contain rounded-md mb-2"
-					onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNmM2Y0ZjYiLz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMDAsIDE1MCkiPgogICAgPHBhdGggZD0iTSA2MCAxMGgyMGM2IDAgMTAtNCAxMC0xMHYtMzBjMC05LTctMTctMTUtMTlDNTcgLTU0IDMwIC02MCAzMCAtNjBzLTEzLTE0LTIyLTIzYy01LTQtMTEtNy0xOC03aC03MGMtNiAwLTExIDQtMTQgOWwtMTQgMjlBMzcgMzcgMCAwMC04MCAtNDB2NDBjMCA2IDQgMTAgMTAgMTBoMjAiIHN0cm9rZT0iIzljYTNhZiIgc3Ryb2tlLXdpZHRoPSI4IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICAgIDxjaXJjbGUgY3g9Ii00MCIgY3k9IjEwIiByPSIxNSIgc3Ryb2tlPSIjOWNhM2FmIiBzdHJva2Utd2lkdGg9IjgiIGZpbGw9Im5vbmUiLz4KICAgIDxwYXRoIGQ9Ik0gLTIwIDEwaDQwIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgICA8Y2lyY2xlIGN4PSI0MCIgY3k9IjEwIiByPSIxNSIgc3Ryb2tlPSIjOWNhM2FmIiBzdHJva2Utd2lkdGg9IjgiIGZpbGw9Im5vbmUiLz4KICA8L2c+Cjwvc3ZnPg==';"
+					onerror="this.style.display='none'; this.parentElement.querySelector('.placeholder-bg')?.classList.remove('hidden');"
 				/>
+				<div class="placeholder-bg hidden w-full h-20 bg-gray-200 rounded-md mb-2"></div>
+				<?php else : ?>
+				<div class="w-full h-20 bg-gray-200 rounded-md mb-2"></div>
+				<?php endif; ?>
 				<!-- Star Rating -->
 				<div class="nhtsa-rating-container" style="min-height: 20px; display: flex; align-items: center; justify-content: center;">
 					<div class="text-sm text-gray-500 animate-pulse">Rating...</div>

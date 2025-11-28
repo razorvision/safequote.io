@@ -6,9 +6,9 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('safety-ratings-form');
-    const yearInput = document.getElementById('year');
-    const makeInput = document.getElementById('make');
-    const modelInput = document.getElementById('model');
+    const yearInput = document.getElementById('safety-year');
+    const makeInput = document.getElementById('safety-make');
+    const modelInput = document.getElementById('safety-model');
     const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
     const buttonText = document.getElementById('button-text');
     const resultsContainer = document.getElementById('safety-ratings-results');
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * Fetch safety ratings from WordPress AJAX endpoint
-     * Uses server-side multi-tier caching (transient → database → API → stale fallback)
+     * Queries local database directly - returns ALL matching variants
      */
     async function fetchSafetyRatings() {
         const year = yearInput.value.trim();
@@ -49,17 +49,18 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsContainer.classList.add('hidden');
 
         try {
-            // Call WordPress AJAX endpoint with multi-tier caching
-            const vehicle = await fetchRatingFromAjax(year, make, model);
+            // Call WordPress AJAX endpoint - returns array of all matching vehicles
+            const vehicles = await fetchRatingFromAjax(year, make, model);
 
-            if (!vehicle || !vehicle.OverallRating) {
+            // Handle array of results (or empty array)
+            if (!vehicles || !Array.isArray(vehicles) || vehicles.length === 0) {
                 showError(`No safety ratings found for ${year} ${make} ${model}`);
                 setLoading(false);
                 return;
             }
 
-            // Render results with cached data
-            renderResults(vehicle);
+            // Render all matching vehicles
+            renderResults(vehicles);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching safety ratings:', error);
@@ -134,29 +135,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * Render safety ratings results
-     * Matches React SafetyRatings.jsx structure exactly
+     * Handles array of vehicles - renders each one
      */
-    function renderResults(ratings) {
+    function renderResults(vehiclesArray) {
+        // Ensure we have an array
+        const vehicles = Array.isArray(vehiclesArray) ? vehiclesArray : [vehiclesArray];
+
+        // Results count header
         let html = `
-            <div class="max-w-3xl mx-auto mt-8 bg-gradient-to-br from-primary/5 to-secondary/20 rounded-xl shadow-md p-6 border border-primary/20 animate-fade-in">
+            <div class="max-w-3xl mx-auto mt-8 space-y-6">
+                <p class="text-gray-600 text-center mb-4">${vehicles.length} vehicle${vehicles.length > 1 ? 's' : ''} found</p>
+        `;
+
+        // Render each vehicle
+        vehicles.forEach(ratings => {
+            html += renderSingleVehicle(ratings);
+        });
+
+        html += `</div>`;
+
+        resultsContainer.innerHTML = html;
+        resultsContainer.classList.remove('hidden');
+
+        // Scroll to results
+        setTimeout(() => {
+            resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }
+
+    /**
+     * Render a single vehicle card
+     */
+    function renderSingleVehicle(ratings) {
+        let html = `
+            <div class="bg-gradient-to-br from-primary/5 to-secondary/20 rounded-xl shadow-md p-6 border border-primary/20 animate-fade-in">
                 <!-- Vehicle Header -->
                 <div class="flex flex-col md:flex-row gap-6 mb-8 pb-8 border-b border-primary/20">
         `;
 
-        // Vehicle picture (use API image if available, otherwise placeholder)
+        // Vehicle picture - ONLY show if exists (no placeholder)
         if (ratings.VehiclePicture) {
             html += `
                     <div class="flex-shrink-0">
                         <img src="${ratings.VehiclePicture}"
                              alt="${ratings.VehicleDescription || ''}"
-                             class="w-32 h-32 object-cover rounded-lg" />
-                    </div>
-            `;
-        } else {
-            html += `
-                    <div class="flex-shrink-0">
-                        <img src="${getVehicleImagePlaceholder(ratings.Make, ratings.Model)}"
-                             alt="${ratings.ModelYear} ${ratings.Make} ${ratings.Model}"
                              class="w-32 h-32 object-cover rounded-lg" />
                     </div>
             `;
@@ -380,14 +402,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         html += `</div>`;
-
-        resultsContainer.innerHTML = html;
-        resultsContainer.classList.remove('hidden');
-
-        // Scroll to results
-        setTimeout(() => {
-            resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+        return html;
     }
 
     /**
@@ -411,13 +426,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         return stars;
-    }
-
-    /**
-     * Get vehicle image placeholder
-     */
-    function getVehicleImagePlaceholder(make, model) {
-        return SAFEQUOTE_THEME_URI + '/assets/images/placeholder-vehicle.jpg';
     }
 
     /**

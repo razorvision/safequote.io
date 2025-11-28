@@ -12,11 +12,10 @@
  *     @type string $make            Vehicle make
  *     @type string $model           Vehicle model
  *     @type string $type            Vehicle type (SUV, Sedan, etc.)
- *     @type float  $price           Vehicle price
- *     @type int    $safety_rating   Safety rating (0-5)
- *     @type int    $mileage         Vehicle mileage
- *     @type array  $safety_features Array of safety features
- *     @type string $condition       Vehicle condition (New, Preowned)
+ *     @type float  $safety_rating   Safety rating (0-5)
+ *     @type float  $front_crash     Front crash rating
+ *     @type float  $side_crash      Side crash rating
+ *     @type float  $rollover_crash  Rollover crash rating
  * }
  * @param int $index The index of the vehicle in the grid (for stagger animation)
  */
@@ -28,17 +27,20 @@ if ( ! isset( $vehicle ) ) {
 $delay = isset( $index ) ? $index * 0.1 : 0;
 ?>
 
+<?php
+$vehicle_image = ! empty( $vehicle['vehicle_picture'] ) ? $vehicle['vehicle_picture'] : ( ! empty( $vehicle['image'] ) ? $vehicle['image'] : '' );
+$has_image     = ! empty( $vehicle_image );
+?>
 <div class="stagger-item bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group" style="animation-delay: <?php echo esc_attr( $delay ); ?>s;">
-	<div class="relative overflow-hidden">
+	<div class="relative overflow-hidden h-48 <?php echo $has_image ? '' : 'bg-gray-200'; ?>">
+		<?php if ( $has_image ) : ?>
 		<img
-			src="<?php echo esc_url( $vehicle['image'] ); ?>"
+			src="<?php echo esc_url( $vehicle_image ); ?>"
 			alt="<?php echo esc_attr( $vehicle['year'] . ' ' . $vehicle['make'] . ' ' . $vehicle['model'] ); ?>"
 			class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-			onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNmM2Y0ZjYiLz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMDAsIDE1MCkiPgogICAgPHBhdGggZD0iTSA2MCAxMGgyMGM2IDAgMTAtNCAxMC0xMHYtMzBjMC05LTctMTctMTUtMTlDNTcgLTU0IDMwIC02MCAzMCAtNjBzLTEzLTE0LTIyLTIzYy01LTQtMTEtNy0xOC03aC03MGMtNiAwLTExIDQtMTQgOWwtMTQgMjlBMzcgMzcgMCAwMC04MCAtNDB2NDBjMCA2IDQgMTAgMTAgMTBoMjAiIHN0cm9rZT0iIzljYTNhZiIgc3Ryb2tlLXdpZHRoPSI4IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICAgIDxjaXJjbGUgY3g9Ii00MCIgY3k9IjEwIiByPSIxNSIgc3Ryb2tlPSIjOWNhM2FmIiBzdHJva2Utd2lkdGg9IjgiIGZpbGw9Im5vbmUiLz4KICAgIDxwYXRoIGQ9Ik0gLTIwIDEwaDQwIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgICA8Y2lyY2xlIGN4PSI0MCIgY3k9IjEwIiByPSIxNSIgc3Ryb2tlPSIjOWNhM2FmIiBzdHJva2Utd2lkdGg9IjgiIGZpbGw9Im5vbmUiLz4KICA8L2c+Cjwvc3ZnPg==';"
+			onerror="this.style.display='none'; this.parentElement.classList.add('bg-gray-200');"
 		/>
-		<span class="absolute top-3 right-3 bg-white/90 text-gray-900 px-3 py-1 rounded-lg text-sm font-medium shadow backdrop-blur-sm">
-			<?php echo esc_html( $vehicle['condition'] ); ?>
-		</span>
+		<?php endif; ?>
 	</div>
 
 	<div class="p-5 space-y-4">
@@ -52,67 +54,58 @@ $delay = isset( $index ) ? $index * 0.1 : 0;
 			</p>
 		</div>
 
-		<!-- Safety Rating and Price -->
-		<div class="flex items-center justify-between">
-			<!-- Safety Rating -->
-			<div class="flex items-center gap-1">
-				<svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
-				</svg>
-				<div class="flex ml-1">
-					<?php for ( $i = 0; $i < 5; $i++ ) : ?>
-						<svg class="w-4 h-4 <?php echo $i < $vehicle['safety_rating'] ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'; ?>" fill="currentColor" viewBox="0 0 20 20">
-							<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-						</svg>
-					<?php endfor; ?>
+		<!-- Safety Rating -->
+		<?php
+		$has_rating = isset( $vehicle['safety_rating'] ) && $vehicle['safety_rating'] !== null && $vehicle['safety_rating'] > 0;
+		?>
+		<div class="flex items-center gap-1">
+			<svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+			</svg>
+			<?php if ( $has_rating ) : ?>
+			<div class="flex ml-1">
+				<?php for ( $i = 0; $i < 5; $i++ ) : ?>
+					<svg class="w-4 h-4 <?php echo $i < $vehicle['safety_rating'] ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'; ?>" fill="currentColor" viewBox="0 0 20 20">
+						<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+					</svg>
+				<?php endfor; ?>
+			</div>
+			<span class="font-semibold text-base ml-1">
+				(<?php echo esc_html( $vehicle['safety_rating'] ); ?>/5)
+			</span>
+			<?php else : ?>
+			<span class="text-gray-500 ml-1"><?php esc_html_e( 'No Rating', 'safequote-traditional' ); ?></span>
+			<?php endif; ?>
+		</div>
+
+		<!-- Crash Ratings -->
+		<?php if ( isset( $vehicle['front_crash'] ) || isset( $vehicle['side_crash'] ) || isset( $vehicle['rollover_crash'] ) ) : ?>
+			<div class="pt-2 border-t">
+				<p class="text-xs text-gray-500 mb-2">
+					<?php esc_html_e( 'Crash Test Ratings:', 'safequote-traditional' ); ?>
+				</p>
+				<div class="space-y-1 text-xs text-gray-700">
+					<?php if ( isset( $vehicle['front_crash'] ) ) : ?>
+						<div class="flex justify-between">
+							<span class="font-medium">Front Crash:</span>
+							<span><?php echo esc_html( number_format( $vehicle['front_crash'], 1 ) ); ?></span>
+						</div>
+					<?php endif; ?>
+					<?php if ( isset( $vehicle['side_crash'] ) ) : ?>
+						<div class="flex justify-between">
+							<span class="font-medium">Side Crash:</span>
+							<span><?php echo esc_html( number_format( $vehicle['side_crash'], 1 ) ); ?></span>
+						</div>
+					<?php endif; ?>
+					<?php if ( isset( $vehicle['rollover_crash'] ) ) : ?>
+						<div class="flex justify-between">
+							<span class="font-medium">Rollover:</span>
+							<span><?php echo esc_html( number_format( $vehicle['rollover_crash'], 1 ) ); ?></span>
+						</div>
+					<?php endif; ?>
 				</div>
-				<span class="font-semibold text-base ml-1">
-					(<?php echo esc_html( $vehicle['safety_rating'] ); ?>/5)
-				</span>
 			</div>
-
-			<!-- Price -->
-			<div class="flex items-center gap-1 text-green-700 font-bold text-xl">
-				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-				</svg>
-				<?php echo esc_html( number_format( $vehicle['price'] ) ); ?>
-			</div>
-		</div>
-
-		<!-- Year and Mileage -->
-		<div class="flex items-center justify-between text-sm text-gray-600 pt-2 border-t">
-			<div class="flex items-center gap-2">
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-				</svg>
-				<span><?php echo esc_html( $vehicle['year'] ); ?></span>
-			</div>
-			<div class="flex items-center gap-2">
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path d="m12 14 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-					<path d="M3.34 19a10 10 0 1 1 17.32 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-				</svg>
-				<span><?php echo esc_html( number_format( $vehicle['mileage'] ) ); ?> miles</span>
-			</div>
-		</div>
-
-		<!-- Safety Features Badges -->
-		<div class="pt-2">
-			<p class="text-xs text-gray-500 mb-2">
-				<?php esc_html_e( 'Key Safety Features:', 'safequote-traditional' ); ?>
-			</p>
-			<div class="flex flex-wrap gap-1">
-				<?php
-				$featured_features = array_slice( $vehicle['safety_features'], 0, 3 );
-				foreach ( $featured_features as $feature ) :
-				?>
-					<span class="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs border border-gray-200">
-						<?php echo esc_html( $feature ); ?>
-					</span>
-				<?php endforeach; ?>
-			</div>
-		</div>
+		<?php endif; ?>
 
 		<!-- Get Insurance Quotes Button -->
 		<button

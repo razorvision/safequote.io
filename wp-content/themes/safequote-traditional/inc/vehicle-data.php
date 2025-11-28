@@ -385,6 +385,26 @@ function safequote_get_vehicle_types() {
 }
 
 /**
+ * Get unique vehicle years
+ *
+ * @return array Array of unique vehicle years sorted in descending order
+ */
+function safequote_get_vehicle_years() {
+    $vehicles = safequote_get_vehicles();
+    $years = array();
+
+    foreach ($vehicles as $vehicle) {
+        if (isset($vehicle['year']) && !in_array($vehicle['year'], $years, true)) {
+            $years[] = $vehicle['year'];
+        }
+    }
+
+    // Sort descending so newest years appear first
+    rsort($years);
+    return $years;
+}
+
+/**
  * Get unique vehicle makes
  *
  * @return array Array of unique vehicle makes

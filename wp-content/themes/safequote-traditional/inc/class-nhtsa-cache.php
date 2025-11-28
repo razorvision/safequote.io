@@ -132,18 +132,18 @@ class SafeQuote_NHTSA_Cache {
     /**
      * Fetch vehicle rating from NHTSA API with error handling
      *
-     * Two-step process (matches front-page safety-ratings.js):
-     * 1. Get VehicleId from modelyear/make/model endpoint
-     * 2. Get detailed ratings from VehicleId endpoint
+     * Two-step process:
+     * 1. Get ALL VehicleIds from modelyear/make/model endpoint (may return multiple variants)
+     * 2. Get detailed ratings for EACH VehicleId and store ALL in database
      *
      * @param int    $year  Vehicle model year.
      * @param string $make  Vehicle make.
      * @param string $model Vehicle model.
-     * @return array|false Rating data or false on failure.
+     * @return array|false First rating data for backward compatibility, or false on failure.
      */
     public static function fetch_from_api($year, $make, $model) {
         try {
-            // STEP 1: Get VehicleId from model/make/year endpoint
+            // STEP 1: Get ALL VehicleIds from model/make/year endpoint
             $model_endpoint = self::API_BASE_URL . "/modelyear/{$year}/make/" . urlencode($make) . "/model/" . urlencode($model);
 
             $response = wp_remote_get($model_endpoint, array(
@@ -176,52 +176,91 @@ class SafeQuote_NHTSA_Cache {
                 return false;
             }
 
-            // Extract VehicleId from first result
-            $vehicle_id = $data['Results'][0]['VehicleId'] ?? null;
-            if (!$vehicle_id) {
-                error_log("[NHTSA] No VehicleId in response for {$year} {$make} {$model}");
-                return false;
+            $results_count = count($data['Results']);
+            error_log("[NHTSA] Found {$results_count} variant(s) for {$year} {$make} {$model}");
+
+            // STEP 2: Fetch detailed ratings for EACH VehicleId
+            $all_parsed_results = array();
+
+            foreach ($data['Results'] as $variant) {
+                $vehicle_id = $variant['VehicleId'] ?? null;
+                $vehicle_desc = $variant['VehicleDescription'] ?? '';
+
+                if (!$vehicle_id) {
+                    continue;
+                }
+
+                // Fetch detailed ratings for this variant
+                $ratings_endpoint = self::API_BASE_URL . "/VehicleId/{$vehicle_id}?format=json";
+
+                $ratings_response = wp_remote_get($ratings_endpoint, array(
+                    'timeout' => self::API_TIMEOUT,
+                    'sslverify' => true,
+                    'headers' => array(
+                        'Accept' => 'application/json',
+                    ),
+                ));
+
+                // Check for network errors
+                if (is_wp_error($ratings_response)) {
+                    error_log("[NHTSA API Error] Step 2 failed for VehicleId {$vehicle_id}: {$ratings_response->get_error_message()}");
+                    continue;
+                }
+
+                // Check HTTP status
+                $ratings_status = wp_remote_retrieve_response_code($ratings_response);
+                if ($ratings_status !== 200) {
+                    error_log("[NHTSA HTTP Error] Step 2 status {$ratings_status} for VehicleId {$vehicle_id}");
+                    continue;
+                }
+
+                // Parse ratings response
+                $ratings_body = wp_remote_retrieve_body($ratings_response);
+                $ratings_data = json_decode($ratings_body, true);
+
+                if (!$ratings_data || !isset($ratings_data['Results']) || empty($ratings_data['Results'])) {
+                    error_log("[NHTSA] No ratings data for VehicleId {$vehicle_id}");
+                    continue;
+                }
+
+                // Parse and store this variant
+                $result = $ratings_data['Results'][0];
+                $parsed = self::parse_nhtsa_response($result);
+                $overall = $parsed['OverallRating'] ?? null;
+
+                error_log("[NHTSA Success] VehicleId {$vehicle_id} - {$vehicle_desc}: OverallRating={$overall}");
+
+                // Store this variant in the database using VehicleDescription as model name
+                $variant_model = $parsed['Model'] ?? $model;
+                if (!empty($parsed['VehicleDescription'])) {
+                    // Extract model name from description (e.g., "2015 Toyota Rav4 SUV AWD Later Release")
+                    // Use the full description to differentiate variants
+                    $variant_model = $parsed['VehicleDescription'];
+                }
+
+                // Store in database with variant-specific model name
+                SafeQuote_NHTSA_Database::update_vehicle_cache(
+                    $year,
+                    $make,
+                    $variant_model,
+                    $parsed,
+                    null, // Permanent storage
+                    'api'
+                );
+
+                $all_parsed_results[] = $parsed;
+
+                // Small delay between API calls to be respectful
+                usleep(100000); // 100ms
             }
 
-            // STEP 2: Get detailed ratings using VehicleId
-            $ratings_endpoint = self::API_BASE_URL . "/VehicleId/{$vehicle_id}?format=json";
-
-            $ratings_response = wp_remote_get($ratings_endpoint, array(
-                'timeout' => self::API_TIMEOUT,
-                'sslverify' => true,
-                'headers' => array(
-                    'Accept' => 'application/json',
-                ),
-            ));
-
-            // Check for network errors
-            if (is_wp_error($ratings_response)) {
-                error_log("[NHTSA API Error] Step 2 ratings lookup failed for VehicleId {$vehicle_id}: {$ratings_response->get_error_message()}");
-                return false;
+            // Return first result for backward compatibility
+            if (!empty($all_parsed_results)) {
+                error_log("[NHTSA] Stored " . count($all_parsed_results) . " variant(s) for {$year} {$make} {$model}");
+                return $all_parsed_results[0];
             }
 
-            // Check HTTP status
-            $ratings_status = wp_remote_retrieve_response_code($ratings_response);
-            if ($ratings_status !== 200) {
-                error_log("[NHTSA HTTP Error] Step 2 status {$ratings_status} for VehicleId {$vehicle_id}");
-                return false;
-            }
-
-            // Parse ratings response
-            $ratings_body = wp_remote_retrieve_body($ratings_response);
-            $ratings_data = json_decode($ratings_body, true);
-
-            if (!$ratings_data || !isset($ratings_data['Results']) || empty($ratings_data['Results'])) {
-                error_log("[NHTSA] No ratings data for VehicleId {$vehicle_id} ({$year} {$make} {$model})");
-                return false;
-            }
-
-            // Extract and parse the ratings
-            $result = $ratings_data['Results'][0];
-            $overall = $result['OverallRating'] ?? null;
-            error_log("[NHTSA Success] VehicleId {$vehicle_id} - {$year} {$make} {$model}: OverallRating={$overall}");
-
-            return self::parse_nhtsa_response($result);
+            return false;
 
         } catch (Exception $e) {
             error_log("[NHTSA Exception] {$e->getMessage()}");

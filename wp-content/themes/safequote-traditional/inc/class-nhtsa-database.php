@@ -264,6 +264,7 @@ class SafeQuote_NHTSA_Database {
             'year' => $year,
             'make' => sanitize_text_field($make),
             'model' => sanitize_text_field($model),
+            'vehicle_id' => isset($nhtsa_data['VehicleId']) ? intval($nhtsa_data['VehicleId']) : null,
             'nhtsa_overall_rating' => $new_rating,
             'front_crash' => isset($nhtsa_data['OverallFrontCrashRating']) ? floatval($nhtsa_data['OverallFrontCrashRating']) : null,
             'side_crash' => isset($nhtsa_data['OverallSideCrashRating']) ? floatval($nhtsa_data['OverallSideCrashRating']) : null,
@@ -277,15 +278,17 @@ class SafeQuote_NHTSA_Database {
 
         if ($existing) {
             // Update existing
+            // Format: year, make, model, vehicle_id, rating, front, side, rollover, picture, data, source, expires, updated
             return $wpdb->update($table, $cache_data, array(
                 'year' => $year,
                 'make' => $make,
                 'model' => $model,
-            ), null, array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s'));
+            ), null, array('%d', '%s', '%s', '%d', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s'));
         } else {
             // Insert new
+            // Format: year, make, model, vehicle_id, rating, front, side, rollover, picture, data, source, expires, updated, created
             $cache_data['created_at'] = current_time('mysql');
-            return $wpdb->insert($table, $cache_data, array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s'));
+            return $wpdb->insert($table, $cache_data, array('%d', '%s', '%s', '%d', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s'));
         }
     }
 

@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Search vehicles AJAX handler
+ * Search vehicles AJAX handler - queries NHTSA database with filtering
  */
 function safequote_ajax_search_vehicles() {
     // Verify nonce
@@ -19,93 +19,23 @@ function safequote_ajax_search_vehicles() {
         wp_die('Security check failed');
     }
 
-    // Get search parameters
-    $year = isset($_POST['year']) ? sanitize_text_field($_POST['year']) : '';
-    $make = isset($_POST['make']) ? sanitize_text_field($_POST['make']) : '';
-    $model = isset($_POST['model']) ? sanitize_text_field($_POST['model']) : '';
-    $min_price = isset($_POST['minPrice']) ? intval($_POST['minPrice']) : 0;
-    $max_price = isset($_POST['maxPrice']) ? intval($_POST['maxPrice']) : 999999;
-    $min_rating = isset($_POST['minSafetyRating']) ? intval($_POST['minSafetyRating']) : 0;
+    // Get search parameters (all optional)
+    $year = isset($_POST['year']) && !empty($_POST['year']) ? intval($_POST['year']) : null;
+    $make = isset($_POST['make']) && !empty($_POST['make']) ? sanitize_text_field($_POST['make']) : null;
+    $model = isset($_POST['model']) && !empty($_POST['model']) ? sanitize_text_field($_POST['model']) : null;
+    $min_rating = isset($_POST['minSafetyRating']) ? floatval($_POST['minSafetyRating']) : 0;
 
-    // Build query
-    $args = array(
-        'post_type' => 'vehicle',
-        'posts_per_page' => get_theme_mod('vehicles_per_page', 12),
-        'post_status' => 'publish',
-        'meta_query' => array(
-            'relation' => 'AND',
-        ),
-    );
+    // Query NHTSA database with filters
+    require_once SAFEQUOTE_THEME_DIR . '/inc/vehicle-data-nhtsa.php';
 
-    // Add year filter
-    if (!empty($year)) {
-        $args['meta_query'][] = array(
-            'key' => '_vehicle_year',
-            'value' => $year,
-            'compare' => '=',
-        );
-    }
+    // Build search args - only include non-null values
+    $search_args = array('limit' => 12);
+    if ($year) $search_args['year'] = $year;
+    if ($make) $search_args['make'] = $make;
+    if ($model) $search_args['model'] = $model;
+    if ($min_rating > 0) $search_args['min_rating'] = $min_rating;
 
-    // Add make filter
-    if (!empty($make)) {
-        $args['meta_query'][] = array(
-            'key' => '_vehicle_make',
-            'value' => $make,
-            'compare' => '=',
-        );
-    }
-
-    // Add model filter
-    if (!empty($model)) {
-        $args['meta_query'][] = array(
-            'key' => '_vehicle_model',
-            'value' => $model,
-            'compare' => 'LIKE',
-        );
-    }
-
-    // Add price range filter
-    $args['meta_query'][] = array(
-        'key' => '_vehicle_price',
-        'value' => array($min_price, $max_price),
-        'type' => 'NUMERIC',
-        'compare' => 'BETWEEN',
-    );
-
-    // Add safety rating filter
-    if ($min_rating > 0) {
-        $args['meta_query'][] = array(
-            'key' => '_vehicle_safety_overall',
-            'value' => $min_rating,
-            'type' => 'NUMERIC',
-            'compare' => '>=',
-        );
-    }
-
-    $query = new WP_Query($args);
-    $vehicles = array();
-
-    if ($query->have_posts()) {
-        while ($query->have_posts()) {
-            $query->the_post();
-            $post_id = get_the_ID();
-
-            $vehicles[] = array(
-                'id' => $post_id,
-                'title' => get_the_title(),
-                'year' => get_post_meta($post_id, '_vehicle_year', true),
-                'make' => get_post_meta($post_id, '_vehicle_make', true),
-                'model' => get_post_meta($post_id, '_vehicle_model', true),
-                'price' => get_post_meta($post_id, '_vehicle_price', true),
-                'safetyRating' => get_post_meta($post_id, '_vehicle_safety_overall', true),
-                'image' => get_the_post_thumbnail_url($post_id, 'vehicle-thumb'),
-                'link' => get_permalink($post_id),
-                'fuelType' => get_post_meta($post_id, '_vehicle_fuel_type', true),
-                'transmission' => get_post_meta($post_id, '_vehicle_transmission', true),
-            );
-        }
-        wp_reset_postdata();
-    }
+    $vehicles = safequote_get_vehicles_from_nhtsa($search_args);
 
     wp_send_json_success(array(
         'vehicles' => $vehicles,
@@ -279,7 +209,7 @@ add_action('wp_ajax_submit_contact', 'safequote_ajax_submit_contact');
 add_action('wp_ajax_nopriv_submit_contact', 'safequote_ajax_submit_contact');
 
 /**
- * Get makes from NHTSA API
+ * Get makes from NHTSA database - with optional year filter
  */
 function safequote_ajax_get_makes() {
     // Verify nonce
@@ -287,41 +217,28 @@ function safequote_ajax_get_makes() {
         wp_die('Security check failed');
     }
 
-    $year = isset($_GET['year']) ? intval($_GET['year']) : 0;
+    $year = isset($_GET['year']) && !empty($_GET['year']) ? intval($_GET['year']) : null;
 
-    if (!$year) {
-        wp_send_json_error('Year is required');
-    }
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'nhtsa_vehicle_cache';
 
-    // Check cache
-    $cache_key = 'safequote_makes_' . $year;
+    // Cache key based on year filter
+    $cache_key = 'safequote_makes' . ($year ? '_' . $year : '_all');
     $makes = get_transient($cache_key);
 
     if (false === $makes) {
-        // Fetch from NHTSA API
-        $response = wp_remote_get("https://api.nhtsa.gov/SafetyRatings/modelyear/{$year}?format=json");
-
-        if (is_wp_error($response)) {
-            wp_send_json_error('Failed to fetch makes');
+        $sql = "SELECT DISTINCT make FROM {$table_name} WHERE make IS NOT NULL";
+        if ($year) {
+            $sql .= $wpdb->prepare(" AND year = %d", $year);
         }
+        $sql .= " ORDER BY make ASC";
 
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
-
-        if (isset($data['Results']) && !empty($data['Results'])) {
-            $makes = array();
-            foreach ($data['Results'] as $result) {
-                $makes[] = array(
-                    'id' => $result['MakeId'],
-                    'name' => $result['Make'],
-                );
-            }
-
-            // Cache for 24 hours
-            set_transient($cache_key, $makes, DAY_IN_SECONDS);
-        } else {
-            wp_send_json_error('No makes found for this year');
+        $results = $wpdb->get_results($sql, ARRAY_A);
+        $makes = array();
+        foreach ($results as $row) {
+            $makes[] = array('id' => sanitize_title($row['make']), 'name' => $row['make']);
         }
+        set_transient($cache_key, $makes, DAY_IN_SECONDS);
     }
 
     wp_send_json_success($makes);
@@ -330,7 +247,7 @@ add_action('wp_ajax_get_makes', 'safequote_ajax_get_makes');
 add_action('wp_ajax_nopriv_get_makes', 'safequote_ajax_get_makes');
 
 /**
- * Get models from NHTSA API
+ * Get models from NHTSA database - with optional year filter
  */
 function safequote_ajax_get_models() {
     // Verify nonce
@@ -338,43 +255,40 @@ function safequote_ajax_get_models() {
         wp_die('Security check failed');
     }
 
-    $year = isset($_GET['year']) ? intval($_GET['year']) : 0;
-    $make = isset($_GET['make']) ? sanitize_text_field($_GET['make']) : '';
+    $year = isset($_GET['year']) && !empty($_GET['year']) ? intval($_GET['year']) : null;
+    $make = isset($_GET['make']) && !empty($_GET['make']) ? sanitize_text_field($_GET['make']) : '';
 
-    if (!$year || !$make) {
-        wp_send_json_error('Year and make are required');
+    // Make is required to get models
+    if (!$make) {
+        wp_send_json_error('Make is required');
     }
 
-    // Check cache
-    $cache_key = 'safequote_models_' . $year . '_' . sanitize_title($make);
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'nhtsa_vehicle_cache';
+
+    // Cache key based on make and optional year filter
+    $cache_key = 'safequote_models_' . sanitize_title($make) . ($year ? '_' . $year : '_all');
     $models = get_transient($cache_key);
 
     if (false === $models) {
-        // Fetch from NHTSA API
-        $make_encoded = urlencode($make);
-        $response = wp_remote_get("https://api.nhtsa.gov/SafetyRatings/modelyear/{$year}/make/{$make_encoded}?format=json");
-
-        if (is_wp_error($response)) {
-            wp_send_json_error('Failed to fetch models');
+        $sql = $wpdb->prepare(
+            "SELECT DISTINCT model FROM {$table_name} WHERE make = %s AND model IS NOT NULL",
+            $make
+        );
+        if ($year) {
+            $sql .= $wpdb->prepare(" AND year = %d", $year);
         }
+        $sql .= " ORDER BY model ASC";
 
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
-
-        if (isset($data['Results']) && !empty($data['Results'])) {
-            $models = array();
-            foreach ($data['Results'] as $result) {
-                $models[] = array(
-                    'id' => $result['ModelId'],
-                    'name' => $result['Model'],
-                );
-            }
-
-            // Cache for 24 hours
-            set_transient($cache_key, $models, DAY_IN_SECONDS);
-        } else {
-            wp_send_json_error('No models found for this make and year');
+        $results = $wpdb->get_results($sql, ARRAY_A);
+        $models = array();
+        foreach ($results as $row) {
+            $models[] = array(
+                'id' => sanitize_title($row['model']),
+                'name' => $row['model'],
+            );
         }
+        set_transient($cache_key, $models, DAY_IN_SECONDS);
     }
 
     wp_send_json_success($models);
@@ -383,7 +297,48 @@ add_action('wp_ajax_get_models', 'safequote_ajax_get_models');
 add_action('wp_ajax_nopriv_get_models', 'safequote_ajax_get_models');
 
 /**
+ * Get available years from NHTSA database - with optional make filter
+ */
+function safequote_ajax_get_years() {
+    // Verify nonce
+    if (!isset($_GET['nonce']) || !wp_verify_nonce($_GET['nonce'], 'safequote_ajax_nonce')) {
+        wp_die('Security check failed');
+    }
+
+    $make = isset($_GET['make']) && !empty($_GET['make']) ? sanitize_text_field($_GET['make']) : null;
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'nhtsa_vehicle_cache';
+
+    // Cache key based on make filter
+    $cache_key = 'safequote_years' . ($make ? '_' . sanitize_title($make) : '_all');
+    $years = get_transient($cache_key);
+
+    if (false === $years) {
+        $sql = "SELECT DISTINCT year FROM {$table_name} WHERE year IS NOT NULL";
+        if ($make) {
+            $sql .= $wpdb->prepare(" AND make = %s", $make);
+        }
+        $sql .= " ORDER BY year DESC";
+
+        $results = $wpdb->get_results($sql, ARRAY_A);
+        $years = array();
+        foreach ($results as $row) {
+            $years[] = array('id' => $row['year'], 'name' => $row['year']);
+        }
+        set_transient($cache_key, $years, DAY_IN_SECONDS);
+    }
+
+    wp_send_json_success($years);
+}
+add_action('wp_ajax_get_years', 'safequote_ajax_get_years');
+add_action('wp_ajax_nopriv_get_years', 'safequote_ajax_get_years');
+
+/**
  * Get NHTSA rating for vehicle AJAX handler
+ *
+ * Queries wp_nhtsa_vehicle_cache directly with LIKE matching on model
+ * to return ALL matching variants (e.g., CAMRY and CAMRY HYBRID).
  */
 function safequote_ajax_get_nhtsa_rating() {
     // Verify nonce (accepts both safequote_ajax_nonce and safequote_top_picks_nonce for backward compatibility)
@@ -406,15 +361,45 @@ function safequote_ajax_get_nhtsa_rating() {
         wp_send_json_error('Year, make, and model are required');
     }
 
-    // Use NHTSA cache class to get rating
-    require_once SAFEQUOTE_THEME_DIR . '/inc/class-nhtsa-cache.php';
-    $rating_data = SafeQuote_NHTSA_Cache::get_vehicle_rating($year, $make, $model);
+    global $wpdb;
+    $table = $wpdb->prefix . 'nhtsa_vehicle_cache';
 
-    if ($rating_data && isset($rating_data['OverallRating'])) {
-        wp_send_json_success($rating_data);
-    } else {
-        wp_send_json_success(array('OverallRating' => null));
+    // Query database with LIKE on model to get all variants (e.g., CAMRY, CAMRY HYBRID)
+    $results = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $table
+         WHERE year = %d
+         AND UPPER(make) = UPPER(%s)
+         AND UPPER(model) LIKE UPPER(%s)
+         ORDER BY model ASC",
+        $year,
+        $make,
+        $model . '%'
+    ));
+
+    // Transform each row to rating format with nhtsa_data JSON merged
+    $vehicles = array();
+    if ($results) {
+        foreach ($results as $row) {
+            $nhtsa_data = json_decode($row->nhtsa_data, true) ?: array();
+            // Merge nhtsa_data with row-level fields (row fields take precedence for key columns)
+            $vehicle = array_merge($nhtsa_data, array(
+                'vehicle_id'              => $row->vehicle_id,
+                'ModelYear'               => (int) $row->year,
+                'Make'                    => $row->make,
+                'Model'                   => $row->model,
+                'OverallRating'           => $row->nhtsa_overall_rating,
+                'OverallFrontCrashRating' => $row->front_crash,
+                'OverallSideCrashRating'  => $row->side_crash,
+                'RolloverRating'          => $row->rollover_crash,
+                'VehiclePicture'          => $row->vehicle_picture,
+                'rating_source'           => $row->rating_source,
+            ));
+            $vehicles[] = $vehicle;
+        }
     }
+
+    // Return array of all matching vehicles
+    wp_send_json_success($vehicles);
 }
 add_action('wp_ajax_get_nhtsa_rating', 'safequote_ajax_get_nhtsa_rating');
 add_action('wp_ajax_nopriv_get_nhtsa_rating', 'safequote_ajax_get_nhtsa_rating');
