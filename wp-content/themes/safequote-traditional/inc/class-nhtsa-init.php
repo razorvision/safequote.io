@@ -233,7 +233,7 @@ class SafeQuote_NHTSA_Init {
             wp_enqueue_script(
                 'safequote-top-safety-picks',
                 SAFEQUOTE_THEME_URI . '/assets/js/top-safety-picks.js',
-                array('safequote-main', 'safequote-nhtsa-api'),
+                array('safequote-main'),
                 SAFEQUOTE_THEME_VERSION,
                 true
             );
