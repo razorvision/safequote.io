@@ -24,18 +24,18 @@
         <!-- Safety Ratings Form - EXACT MATCH to React SafetyRatings.jsx -->
         <form id="safety-ratings-form" class="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-8">
             <div class="md:col-span-1">
-                <label for="year" class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e('Year', 'safequote-traditional'); ?></label>
-                <input id="year" type="text" value="2024" placeholder="e.g., 2024" required
+                <label for="safety-year" class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e('Year', 'safequote-traditional'); ?></label>
+                <input id="safety-year" type="text" value="2024" placeholder="e.g., 2024" required
                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
             </div>
             <div class="md:col-span-1">
-                <label for="make" class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e('Make', 'safequote-traditional'); ?></label>
-                <input id="make" type="text" value="Toyota" placeholder="e.g., Toyota" required
+                <label for="safety-make" class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e('Make', 'safequote-traditional'); ?></label>
+                <input id="safety-make" type="text" value="Toyota" placeholder="e.g., Toyota" required
                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
             </div>
             <div class="md:col-span-1">
-                <label for="model" class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e('Model', 'safequote-traditional'); ?></label>
-                <input id="model" type="text" value="Camry" placeholder="e.g., Camry" required
+                <label for="safety-model" class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e('Model', 'safequote-traditional'); ?></label>
+                <input id="safety-model" type="text" value="Camry" placeholder="e.g., Camry" required
                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
             </div>
             <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full md:col-span-1">

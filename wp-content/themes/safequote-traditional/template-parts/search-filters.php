@@ -55,7 +55,7 @@ $filters = isset( $filters ) ? $filters : array(
 			<label for="filter-make" class="form-label">
 				<?php esc_html_e( 'Make', 'safequote-traditional' ); ?>
 			</label>
-			<select id="filter-make" name="make" class="form-select" data-filter="make" disabled>
+			<select id="filter-make" name="make" class="form-select" data-filter="make">
 				<option value="">
 					<?php esc_html_e( 'Select Make', 'safequote-traditional' ); ?>
 				</option>
@@ -67,7 +67,7 @@ $filters = isset( $filters ) ? $filters : array(
 			<label for="filter-model" class="form-label">
 				<?php esc_html_e( 'Model', 'safequote-traditional' ); ?>
 			</label>
-			<select id="filter-model" name="model" class="form-select" data-filter="model" disabled>
+			<select id="filter-model" name="model" class="form-select" data-filter="model">
 				<option value="">
 					<?php esc_html_e( 'Select Model', 'safequote-traditional' ); ?>
 				</option>
@@ -98,11 +98,11 @@ $filters = isset( $filters ) ? $filters : array(
 	</form>
 
 	<!-- Action Buttons -->
-	<div class="mt-6 pt-6 border-t border-gray-200 flex gap-3">
-		<button id="search-vehicles-btn" class="btn btn-primary flex-1">
+	<div class="mt-6 pt-6 border-t border-gray-200 flex justify-end gap-3">
+		<button id="search-vehicles-btn" class="btn btn-primary bg-gradient-to-r from-primary to-teal-500 hover:from-primary/90 hover:to-teal-500/90 text-white px-8 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
 			<?php esc_html_e( 'Search Vehicles', 'safequote-traditional' ); ?>
 		</button>
-		<button id="reset-filters" class="btn btn-outline">
+		<button id="reset-filters" class="btn btn-outline text-gray-700 border border-gray-300 px-6 py-2 rounded-lg font-medium transition-all duration-300 hover:bg-gray-100">
 			<?php esc_html_e( 'Reset', 'safequote-traditional' ); ?>
 		</button>
 	</div>
@@ -117,34 +117,36 @@ document.addEventListener('DOMContentLoaded', function() {
 	const safetyRatingInput = document.getElementById('filter-safety-rating');
 	const resetButton = document.getElementById('reset-filters');
 
-	// Load available years on page load
-	if (yearSelect && window.safequote_ajax?.nonce) {
-		loadYears();
+	// Load available years and makes on page load
+	if (window.safequote_ajax?.nonce) {
+		if (yearSelect) loadYears();
+		if (makeSelect) loadMakes(); // Load all makes
 	}
 
-	// Year change handler
+	// Year change handler - filter makes by year if selected
 	yearSelect?.addEventListener('change', function() {
-		// Reset make and model when year changes
-		makeSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Make', 'safequote-traditional' ); ?></option>';
-		makeSelect.disabled = !this.value;
+		const make = makeSelect.value;
+		// Reload makes filtered by year (or all if no year selected)
+		loadMakes(this.value || null);
+		// Reset model when year changes
 		modelSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Model', 'safequote-traditional' ); ?></option>';
-		modelSelect.disabled = true;
-
-		if (this.value) {
-			loadMakes(this.value);
+		// If make is selected, reload models filtered by year
+		if (make) {
+			loadModels(this.value || null, make);
 		}
 		// Don't auto-search, wait for Search button click
 	});
 
-	// Make change handler
+	// Make change handler - load models for selected make and filter years
 	makeSelect?.addEventListener('change', function() {
 		const year = yearSelect.value;
+		// Reload years filtered by make (bidirectional filtering)
+		loadYears(this.value || null);
 		// Reset model when make changes
 		modelSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Model', 'safequote-traditional' ); ?></option>';
-		modelSelect.disabled = !this.value;
-
-		if (this.value && year) {
-			loadModels(year, this.value);
+		// If make is selected, load models
+		if (this.value) {
+			loadModels(year || null, this.value);
 		}
 		// Don't auto-search, wait for Search button click
 	});
@@ -171,10 +173,10 @@ document.addEventListener('DOMContentLoaded', function() {
 	resetButton?.addEventListener('click', function(e) {
 		e.preventDefault();
 		filterForm?.reset();
-		makeSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Make', 'safequote-traditional' ); ?></option>';
-		makeSelect.disabled = true;
+		// Reload all years and makes (unfiltered)
+		loadYears();
+		loadMakes();
 		modelSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Model', 'safequote-traditional' ); ?></option>';
-		modelSelect.disabled = true;
 		if (safetyRatingInput) {
 			safetyRatingInput.value = 0;
 			document.getElementById('safety-rating-value').textContent = '0/5';
@@ -182,20 +184,28 @@ document.addEventListener('DOMContentLoaded', function() {
 		triggerFilter();
 	});
 
-	function loadYears() {
+	function loadYears(make = null) {
 		const params = new URLSearchParams({
 			action: 'get_years',
 			nonce: window.safequote_ajax.nonce
 		});
+		// Add make filter if provided (bidirectional filtering)
+		if (make) {
+			params.append('make', make);
+		}
 
 		fetch(`${window.safequote_ajax.ajax_url}?${params.toString()}`)
 			.then(res => res.json())
 			.then(data => {
+				const currentYear = yearSelect.value;
+				yearSelect.innerHTML = '<option value=""><?php esc_html_e( 'All Years', 'safequote-traditional' ); ?></option>';
 				if (data.success && data.data) {
 					data.data.forEach(year => {
 						const option = document.createElement('option');
 						option.value = year.name;
 						option.textContent = year.name;
+						// Preserve current selection if it exists in new list
+						if (year.name == currentYear) option.selected = true;
 						yearSelect.appendChild(option);
 					});
 				}
@@ -203,53 +213,214 @@ document.addEventListener('DOMContentLoaded', function() {
 			.catch(err => console.error('Error loading years:', err));
 	}
 
-	function loadMakes(year) {
+	function loadMakes(year = null) {
 		const params = new URLSearchParams({
 			action: 'get_makes',
-			year: year,
 			nonce: window.safequote_ajax.nonce
 		});
+		// Only add year if provided
+		if (year) {
+			params.append('year', year);
+		}
 
 		fetch(`${window.safequote_ajax.ajax_url}?${params.toString()}`)
 			.then(res => res.json())
 			.then(data => {
+				const currentMake = makeSelect.value;
+				makeSelect.innerHTML = '<option value=""><?php esc_html_e( 'All Makes', 'safequote-traditional' ); ?></option>';
 				if (data.success && data.data) {
-					makeSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Make', 'safequote-traditional' ); ?></option>';
 					data.data.forEach(make => {
 						const option = document.createElement('option');
 						option.value = make.name;
 						option.textContent = make.name;
+						// Preserve current selection if it exists in new list
+						if (make.name == currentMake) option.selected = true;
 						makeSelect.appendChild(option);
 					});
-					makeSelect.disabled = false;
 				}
 			})
 			.catch(err => console.error('Error loading makes:', err));
 	}
 
-	function loadModels(year, make) {
+	function loadModels(year = null, make) {
 		const params = new URLSearchParams({
 			action: 'get_models',
-			year: year,
 			make: make,
 			nonce: window.safequote_ajax.nonce
 		});
+		// Only add year if provided
+		if (year) {
+			params.append('year', year);
+		}
 
 		fetch(`${window.safequote_ajax.ajax_url}?${params.toString()}`)
 			.then(res => res.json())
 			.then(data => {
 				if (data.success && data.data) {
-					modelSelect.innerHTML = '<option value=""><?php esc_html_e( 'Select Model', 'safequote-traditional' ); ?></option>';
+					modelSelect.innerHTML = '<option value=""><?php esc_html_e( 'All Models', 'safequote-traditional' ); ?></option>';
 					data.data.forEach(model => {
 						const option = document.createElement('option');
 						option.value = model.name;
 						option.textContent = model.name;
 						modelSelect.appendChild(option);
 					});
-					modelSelect.disabled = false;
 				}
 			})
 			.catch(err => console.error('Error loading models:', err));
+	}
+
+	function displaySearchResults(vehicles, year, make, model) {
+		const vehicleGridContainer = document.getElementById('vehicle-grid');
+		if (!vehicleGridContainer) return;
+
+		// Find the inner grid div or create it
+		let grid = vehicleGridContainer.querySelector('.grid');
+		if (!grid) {
+			grid = document.createElement('div');
+			grid.className = 'grid md:grid-cols-2 lg:grid-cols-3 gap-6';
+			vehicleGridContainer.appendChild(grid);
+		}
+
+		// Clear existing vehicle cards
+		grid.innerHTML = '';
+
+		if (!vehicles || vehicles.length === 0) {
+			grid.innerHTML = `
+				<div class="col-span-full text-center py-8">
+					<p class="text-gray-600"><?php esc_html_e( 'No vehicles found. Try adjusting your filters.', 'safequote-traditional' ); ?></p>
+				</div>
+			`;
+			// Update vehicle count
+			const countSpan = vehicleGridContainer.querySelector('span');
+			if (countSpan) {
+				countSpan.textContent = `0 <?php esc_html_e( 'vehicles found', 'safequote-traditional' ); ?>`;
+			}
+			return;
+		}
+
+		// Add vehicles to grid
+		vehicles.forEach((vehicle, index) => {
+			const cardHTML = createVehicleCardHTML(vehicle, index);
+			const tempDiv = document.createElement('div');
+			tempDiv.innerHTML = cardHTML;
+			grid.appendChild(tempDiv.firstElementChild);
+		});
+
+		// Update vehicle count in header
+		const countSpan = vehicleGridContainer.querySelector('span');
+		if (countSpan) {
+			countSpan.textContent = `${vehicles.length} <?php esc_html_e( 'vehicles found', 'safequote-traditional' ); ?>`;
+		}
+	}
+
+	function createVehicleCardHTML(vehicle, index) {
+		const delay = index * 0.1;
+		// Fallback to nhtsa_data.OverallRating if safety_rating is null/undefined
+		// Keep null if no rating exists (will display "No Rating")
+		const safetyRating = vehicle.safety_rating ?? vehicle.nhtsa_data?.OverallRating ?? null;
+		const hasRating = safetyRating !== null && safetyRating > 0;
+		const safetyStars = hasRating ? generateSafetyStars(safetyRating) : '';
+		// Fallback for crash ratings from nhtsa_data
+		const frontCrash = vehicle.front_crash ?? vehicle.nhtsa_data?.OverallFrontCrashRating ?? null;
+		const sideCrash = vehicle.side_crash ?? vehicle.nhtsa_data?.OverallSideCrashRating ?? null;
+		const rolloverCrash = vehicle.rollover_crash ?? vehicle.nhtsa_data?.RolloverRating ?? null;
+		const crashRatingsHTML = frontCrash || sideCrash || rolloverCrash ? `
+			<div class="pt-2 border-t">
+				<p class="text-xs text-gray-500 mb-2"><?php esc_html_e( 'Crash Test Ratings:', 'safequote-traditional' ); ?></p>
+				<div class="space-y-1 text-xs text-gray-700">
+					${frontCrash ? `<div class="flex justify-between"><span class="font-medium"><?php esc_html_e( 'Front Crash:', 'safequote-traditional' ); ?></span><span>${parseFloat(frontCrash).toFixed(1)}</span></div>` : ''}
+					${sideCrash ? `<div class="flex justify-between"><span class="font-medium"><?php esc_html_e( 'Side Crash:', 'safequote-traditional' ); ?></span><span>${parseFloat(sideCrash).toFixed(1)}</span></div>` : ''}
+					${rolloverCrash ? `<div class="flex justify-between"><span class="font-medium"><?php esc_html_e( 'Rollover:', 'safequote-traditional' ); ?></span><span>${parseFloat(rolloverCrash).toFixed(1)}</span></div>` : ''}
+				</div>
+			</div>
+		` : '';
+		// Get image from vehicle_picture, image, or nhtsa_data.VehiclePicture - fallback to grey placeholder
+		const vehicleImage = vehicle.vehicle_picture || vehicle.image || vehicle.nhtsa_data?.VehiclePicture || '';
+		const hasImage = vehicleImage && vehicleImage.trim() !== '';
+
+		return `
+			<div class="stagger-item bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group" style="animation-delay: ${delay}s;">
+				<div class="relative overflow-hidden h-48 ${hasImage ? '' : 'bg-gray-200'}">
+					${hasImage ? `
+					<img
+						src="${escapeHtml(vehicleImage)}"
+						alt="${escapeHtml(vehicle.year + ' ' + vehicle.make + ' ' + vehicle.model)}"
+						class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+						onerror="this.style.display='none'; this.parentElement.classList.add('bg-gray-200');"
+					/>
+					` : ``}
+				</div>
+
+				<div class="p-5 space-y-4">
+					<!-- Vehicle Name and Type -->
+					<div>
+						<h3 class="text-xl font-semibold text-gray-900 mb-2">
+							${escapeHtml(vehicle.year + ' ' + vehicle.make + ' ' + vehicle.model)}
+						</h3>
+						<p class="text-gray-600 text-sm">
+							${escapeHtml(vehicle.type || '')}
+						</p>
+					</div>
+
+					<!-- Safety Rating -->
+					<div class="flex items-center gap-1">
+						<svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+						</svg>
+						${hasRating ? `
+						<div class="flex ml-1">
+							${safetyStars}
+						</div>
+						<span class="font-semibold text-base ml-1">
+							(${safetyRating}/5)
+						</span>
+						` : `
+						<span class="text-gray-500 ml-1"><?php esc_html_e( 'No Rating', 'safequote-traditional' ); ?></span>
+						`}
+					</div>
+
+					<!-- Crash Ratings -->
+					${crashRatingsHTML}
+
+					<!-- Get Insurance Quotes Button -->
+					<button
+						class="w-full mt-4 bg-gradient-to-r from-primary to-teal-500 hover:from-primary/90 hover:to-teal-500/90 text-white py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
+						data-vehicle-id="${escapeHtml(vehicle.id)}"
+						data-vehicle-make="${escapeHtml(vehicle.make)}"
+						data-vehicle-model="${escapeHtml(vehicle.model)}"
+						data-vehicle-year="${escapeHtml(vehicle.year)}"
+					>
+						<?php esc_html_e( 'Get Insurance Quotes', 'safequote-traditional' ); ?>
+					</button>
+				</div>
+			</div>
+		`;
+	}
+
+	function generateSafetyStars(rating) {
+		let stars = '';
+		for (let i = 0; i < 5; i++) {
+			const isFilled = i < rating;
+			stars += `
+				<svg class="w-4 h-4 ${isFilled ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}" fill="currentColor" viewBox="0 0 20 20">
+					<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+				</svg>
+			`;
+		}
+		return stars;
+	}
+
+	function escapeHtml(text) {
+		if (text === null || text === undefined) return '';
+		const str = String(text);
+		const map = {
+			'&': '&amp;',
+			'<': '&lt;',
+			'>': '&gt;',
+			'"': '&quot;',
+			"'": '&#039;'
+		};
+		return str.replace(/[&<>"']/g, m => map[m]);
 	}
 
 	function triggerFilter() {
@@ -258,20 +429,17 @@ document.addEventListener('DOMContentLoaded', function() {
 		const model = modelSelect.value;
 		const minSafetyRating = parseInt(safetyRatingInput.value);
 
-		// Require year and make to perform search
-		if (!year || !make) {
-			return;
-		}
-
-		// Build search parameters
+		// Build search parameters - only include non-empty values
 		const params = new URLSearchParams({
 			action: 'search_vehicles',
-			year: year,
-			make: make,
-			model: model,
-			minSafetyRating: minSafetyRating,
 			nonce: window.safequote_ajax.nonce
 		});
+
+		// Add filters only if they have values
+		if (year) params.append('year', year);
+		if (make) params.append('make', make);
+		if (model) params.append('model', model);
+		if (minSafetyRating > 0) params.append('minSafetyRating', minSafetyRating);
 
 		// Make AJAX request to search vehicles
 		fetch(window.safequote_ajax.ajax_url, {
@@ -296,10 +464,8 @@ document.addEventListener('DOMContentLoaded', function() {
 				});
 				document.dispatchEvent(filterChangeEvent);
 
-				// Display vehicles if display function exists
-				if (window.SafeQuoteFilters?.displayVehicles) {
-					window.SafeQuoteFilters.displayVehicles(data.data.vehicles);
-				}
+				// Display search results
+				displaySearchResults(data.data.vehicles, year, make, model);
 			}
 		})
 		.catch(err => console.error('Error searching vehicles:', err));

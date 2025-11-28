@@ -65,8 +65,6 @@ function safequote_add_meta_tags() {
   $og_type = 'website';
   if ($post->post_type === 'post') {
     $og_type = 'article';
-  } elseif ($post->post_type === 'vehicle') {
-    $og_type = 'product';
   }
 
   // Output Open Graph meta tags
@@ -348,56 +346,6 @@ function safequote_add_webpage_schema() {
   }
 }
 add_action('wp_head', 'safequote_add_webpage_schema', 5);
-
-/**
- * Add Schema.org Product schema for vehicle posts (JSON-LD)
- *
- * Adds product/offer information for vehicle custom post type
- *
- * @since 1.0.0
- */
-function safequote_add_product_schema() {
-  // Don't add if Yoast SEO or Rank Math is active
-  if (defined('WPSEO_VERSION') || defined('RANK_MATH_VERSION')) {
-    return;
-  }
-
-  if (!is_singular('vehicle')) {
-    return;
-  }
-
-  $post = get_queried_object();
-
-  $product = array(
-    '@context'      => 'https://schema.org',
-    '@type'         => 'Product',
-    'name'          => get_the_title(),
-    'url'           => get_permalink(),
-    'description'   => wp_trim_words($post->post_content, 50),
-  );
-
-  // Add featured image
-  if (has_post_thumbnail()) {
-    $image = wp_get_attachment_image_src(get_post_thumbnail_id(), 'large');
-    $product['image'] = $image[0];
-  }
-
-  // Get safety rating from post meta if available
-  $safety_rating = get_post_meta($post->ID, 'safety_rating', true);
-  if ($safety_rating) {
-    $product['aggregateRating'] = array(
-      '@type'       => 'AggregateRating',
-      'ratingValue' => $safety_rating,
-      'worstRating' => 1,
-      'bestRating'  => 5,
-    );
-  }
-
-  echo "<script type=\"application/ld+json\">\n";
-  echo wp_json_encode($product, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-  echo "\n</script>\n";
-}
-add_action('wp_head', 'safequote_add_product_schema', 5);
 
 /**
  * Get logo URL for schema.org markup

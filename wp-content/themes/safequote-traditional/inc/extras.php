@@ -275,7 +275,7 @@ function safequote_breadcrumbs() {
 function safequote_search_filter($query) {
     if (!is_admin() && $query->is_main_query()) {
         if ($query->is_search()) {
-            $query->set('post_type', array('post', 'page', 'vehicle'));
+            $query->set('post_type', array('post', 'page'));
         }
     }
 }

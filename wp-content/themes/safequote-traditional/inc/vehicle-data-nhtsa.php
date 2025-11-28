@@ -151,8 +151,8 @@ function safequote_get_vehicles_from_nhtsa($args = array()) {
 
     $table = $wpdb->prefix . 'nhtsa_vehicle_cache';
 
-    // Build WHERE conditions
-    $where_conditions = array('nhtsa_overall_rating IS NOT NULL');
+    // Build WHERE conditions (1=1 allows all vehicles, NULL ratings = "No Rating")
+    $where_conditions = array('1=1');
 
     if (!empty($args['min_rating'])) {
         $where_conditions[] = $wpdb->prepare('nhtsa_overall_rating >= %f', $args['min_rating']);

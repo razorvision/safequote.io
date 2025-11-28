@@ -31,12 +31,14 @@ class SafeQuote_NHTSA_Admin_Page {
      * @return void
      */
     public static function register_menu() {
-        add_options_page(
+        add_menu_page(
             __('NHTSA Vehicle Data', 'safequote-traditional'),
-            __('NHTSA Vehicle Data', 'safequote-traditional'),
+            __('NHTSA Data', 'safequote-traditional'),
             'manage_options',
             'safequote-nhtsa',
-            array(__CLASS__, 'render_page')
+            array(__CLASS__, 'render_page'),
+            'dashicons-car',
+            30
         );
     }
 
